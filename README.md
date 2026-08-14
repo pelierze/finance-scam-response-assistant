@@ -7,7 +7,7 @@
 
 - 분석 전 고정 긴급 안내
 - 외부 AI 전송 전 민감정보 마스킹
-- Structured Outputs 기반 행동 상태 추출
+- 로컬 규칙과 Structured Outputs를 결합한 행동 상태 추출
 - 한 차례 추가 확인과 다차원·복합 피해 상태 판단
 - 공식 출처 기반 행동 지침 조합
 - 복합 피해를 포함한 7개 샘플 시나리오와 장애 fallback
@@ -23,9 +23,10 @@ pip install -r requirements.txt -r requirements-dev.txt
 streamlit run app.py
 ```
 
-자유 입력 분석에는 서버 환경변수 `OPENAI_API_KEY`가 필요합니다. 키가 없어도
-샘플 시연과 고정 긴급 안내는 동작합니다. `.env`와
-`.streamlit/secrets.toml`은 Git에서 제외됩니다.
+`OPENAI_API_KEY`가 있으면 LLM 구조화 추출을 사용합니다. 키가 없거나 API 호출이
+실패하면 주요 금융사기 표현을 지원하는 로컬 규칙 분석으로 자유 입력을 처리합니다.
+로컬 분석은 범위가 제한되므로 화면에 분석 방식을 알리고 불명확한 상태는 추가 확인으로
+보완합니다. `.env`와 `.streamlit/secrets.toml`은 Git에서 제외됩니다.
 
 ## 검증
 
