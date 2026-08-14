@@ -33,8 +33,56 @@ ANSWER_MAP = {
 
 CARD_CSS = """
 <style>
+/* Foundation */
+:root { --navy:#102a43; --blue:#2563eb; --line:#dbe5f0; --muted:#62748a; }
+.stApp { background:linear-gradient(180deg,#f4f8fd 0,#ffffff 28rem); color:var(--navy); }
+[data-testid="stHeader"] { background:transparent; }
+[data-testid="stMainBlockContainer"] { max-width:960px; padding-top:2.4rem; padding-bottom:4rem; }
+h1, h2, h3 { color:var(--navy); letter-spacing:-.035em; }
+h1 { font-size:clamp(2rem,5vw,3.1rem) !important; line-height:1.14 !important; }
+h2 { margin-top:2.2rem !important; }
+p, label { line-height:1.65; }
+
+/* Hero */
+.hero { padding:1.4rem 0 1.3rem; }
+.eyebrow { display:inline-flex; align-items:center; gap:.4rem; color:#1d4ed8; background:#e8f0ff;
+  border:1px solid #c9dcff; border-radius:999px; padding:.38rem .72rem; font-size:.78rem;
+  font-weight:750; letter-spacing:.04em; margin-bottom:.45rem; }
+.hero-subtitle { max-width:680px; color:#53677f; font-size:1.04rem; margin:.1rem 0 1rem; }
+.trust-row { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:.9rem; }
+.trust-chip { display:inline-flex; align-items:center; gap:.35rem; padding:.38rem .65rem; border-radius:8px;
+  background:rgba(255,255,255,.82); border:1px solid var(--line); color:#43566e; font-size:.78rem; }
+.trust-chip strong { color:#173a64; }
+
+/* Streamlit surfaces */
+[data-testid="stVerticalBlockBorderWrapper"] { border:1px solid var(--line) !important; border-radius:18px !important;
+  background:rgba(255,255,255,.94); box-shadow:0 10px 28px rgba(31,64,104,.07); padding:.3rem; }
+[data-testid="stAlert"] { border-radius:13px; border-width:1px; box-shadow:none; }
+[data-baseweb="select"] > div, [data-testid="stTextArea"] textarea { border-radius:12px !important;
+  border-color:#cbd8e6 !important; background:#fbfdff !important; }
+[data-testid="stTextArea"] textarea:focus { border-color:var(--blue) !important;
+  box-shadow:0 0 0 3px rgba(37,99,235,.12) !important; }
+.stButton > button { border-radius:12px; min-height:3rem; font-weight:750; letter-spacing:-.01em;
+  transition:transform .16s ease,box-shadow .16s ease; }
+.stButton > button[kind="primary"] { border:0; background:linear-gradient(135deg,#2563eb,#1746b8);
+  box-shadow:0 8px 18px rgba(37,99,235,.22); }
+.stButton > button:hover { transform:translateY(-1px); box-shadow:0 10px 22px rgba(37,99,235,.25); }
+[data-testid="stExpander"] { border:1px solid var(--line); border-radius:13px; background:#fff; overflow:hidden; }
+hr { border-color:#dce6f1 !important; margin:2.25rem 0 !important; }
+
+/* Section labels */
+.section-kicker { color:#2563eb; font-size:.76rem; font-weight:800; letter-spacing:.08em;
+  text-transform:uppercase; margin-bottom:.18rem; }
+.section-title { color:var(--navy); font-size:1.22rem; font-weight:800; letter-spacing:-.025em; margin-bottom:.15rem; }
+.section-copy { color:var(--muted); font-size:.9rem; margin-bottom:.85rem; }
+.input-panel-title { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:.25rem; }
+.step-badge { color:#1d4ed8; background:#eef4ff; border-radius:999px; padding:.3rem .58rem;
+  font-size:.72rem; font-weight:800; white-space:nowrap; }
+
+/* Results */
 .status-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.75rem; margin:.5rem 0 1rem; }
-.status-card { border:1px solid #e2e8f0; border-radius:12px; padding:1rem; background:#fff; }
+.status-card { border:1px solid #e2e8f0; border-radius:14px; padding:1.05rem 1.1rem; background:#fff;
+  box-shadow:0 4px 14px rgba(31,64,104,.05); }
 .status-card .label { color:#475569; font-size:.88rem; margin-bottom:.35rem; }
 .status-card .value { font-size:1.05rem; font-weight:700; }
 .status-card.danger { border-left:6px solid #dc2626; background:#fff7f7; }
@@ -44,7 +92,17 @@ CARD_CSS = """
 .status-card.info { border-left:6px solid #2563eb; background:#eff6ff; }
 .status-card.info .value { color:#1d4ed8; }
 .section-note { color:#64748b; font-size:.9rem; margin-top:-.6rem; margin-bottom:.8rem; }
-@media (max-width: 640px) { .status-grid { grid-template-columns:1fr; } }
+.footer-note { margin-top:2rem; padding:1rem 1.1rem; border-radius:12px; background:#f8fafc;
+  color:#66788e; font-size:.8rem; text-align:center; border:1px solid #e4ebf3; }
+@media (max-width:640px) {
+  [data-testid="stMainBlockContainer"] { padding:1.2rem 1rem 2.5rem; }
+  .hero { padding-top:.5rem; }
+  .trust-row { gap:.35rem; }
+  .trust-chip { font-size:.72rem; }
+  .status-grid { grid-template-columns:1fr; }
+  .input-panel-title { align-items:flex-start; }
+}
+@media (prefers-reduced-motion:reduce) { * { scroll-behavior:auto !important; transition:none !important; } }
 </style>
 """
 
@@ -167,32 +225,75 @@ def render_result(analysis: StructuredAnalysis) -> None:
 
 
 def main() -> None:
-    st.set_page_config(page_title="AI 금융사기 응급대응 비서", page_icon="🛡️")
-    st.title("🛡️ AI 금융사기 응급대응 비서")
+    st.set_page_config(
+        page_title="AI 금융사기 응급대응 비서",
+        page_icon="🛡️",
+        layout="centered",
+        initial_sidebar_state="collapsed",
+    )
     st.markdown(CARD_CSS, unsafe_allow_html=True)
-    st.caption("금융사기 여부를 확정하지 않고, 현재 상황에서 필요한 대응 행동을 안내합니다.")
+    st.markdown(
+        '<div class="hero"><div class="eyebrow">● FINANCIAL SAFETY ASSISTANT</div></div>',
+        unsafe_allow_html=True,
+    )
+    st.title("🛡️ AI 금융사기 응급대응 비서")
+    st.markdown(
+        '<div class="hero-subtitle">의심 상황을 설명하면 현재 노출 상태를 정리하고, '
+        '공식 근거에 기반한 대응 행동을 우선순위대로 안내합니다.</div>'
+        '<div class="trust-row">'
+        '<span class="trust-chip">✓ <strong>개인정보 미저장</strong></span>'
+        '<span class="trust-chip">✓ <strong>공식 출처 기반</strong></span>'
+        '<span class="trust-chip">✓ <strong>AI 판단 범위 제한</strong></span>'
+        '</div>',
+        unsafe_allow_html=True,
+    )
 
-    st.error(
-        "이미 돈을 송금했다면 분석을 기다리지 말고 금융회사 또는 112에 즉시 피해 사실을 알리세요."
+    st.markdown(
+        '<div class="section-kicker">Emergency first</div>'
+        '<div class="section-title">분석 전에 먼저 확인하세요</div>'
+        '<div class="section-copy">이미 피해가 진행됐다면 AI 분석보다 즉시 신고가 우선입니다.</div>',
+        unsafe_allow_html=True,
     )
-    st.warning(
-        "상대방이 설치하도록 한 앱이 있다면 해당 기기에서 금융·인증 앱 사용을 중단하세요."
-    )
-    st.info("주민등록번호, 계좌번호, 카드번호, 비밀번호, 인증번호를 입력하지 마세요.")
+    with st.container(border=True):
+        st.error(
+            "이미 돈을 송금했다면 분석을 기다리지 말고 금융회사 또는 112에 즉시 피해 사실을 알리세요."
+        )
+        st.warning(
+            "상대방이 설치하도록 한 앱이 있다면 해당 기기에서 금융·인증 앱 사용을 중단하세요."
+        )
+        st.info("주민등록번호, 계좌번호, 카드번호, 비밀번호, 인증번호를 입력하지 마세요.")
 
     samples = load_samples(ROOT / "data" / "sample_cases.json")
     labels = ["직접 입력"] + [sample.label for sample in samples]
-    selected_label = st.selectbox("예시 상황", labels)
-    selected = next((sample for sample in samples if sample.label == selected_label), None)
-    default_text = selected.text if selected else ""
-    situation = st.text_area(
-        "의심되는 상황을 설명해주세요",
-        value=default_text,
-        height=150,
-        max_chars=3000,
+    st.markdown(
+        '<div class="section-kicker">Situation analysis</div>'
+        '<div class="section-title">현재 상황을 알려주세요</div>'
+        '<div class="section-copy">긴 문장 대신 기억나는 사실만 간단히 적어도 됩니다.</div>',
+        unsafe_allow_html=True,
     )
+    with st.container(border=True):
+        st.markdown(
+            '<div class="input-panel-title"><strong>상황 입력</strong>'
+            '<span class="step-badge">STEP 1 · 약 10초</span></div>',
+            unsafe_allow_html=True,
+        )
+        selected_label = st.selectbox("예시 상황", labels)
+        selected = next(
+            (sample for sample in samples if sample.label == selected_label), None
+        )
+        default_text = selected.text if selected else ""
+        situation = st.text_area(
+            "의심되는 상황을 설명해주세요",
+            value=default_text,
+            height=150,
+            max_chars=3000,
+            placeholder="예: 검찰이라고 전화가 와서 앱 설치와 송금을 요구했습니다.",
+        )
+        analyze_clicked = st.button(
+            "상황 분석하기  →", type="primary", use_container_width=True
+        )
 
-    if st.button("상황 분석하기", type="primary", use_container_width=True):
+    if analyze_clicked:
         if selected and situation.strip() == selected.text:
             st.session_state.analysis = selected.analysis
             st.session_state.sample_mode = True
@@ -234,10 +335,10 @@ def main() -> None:
                 st.session_state.analysis = analysis
         render_result(analysis)
 
-    st.divider()
-    st.caption(
-        "본 서비스는 금융회사·수사기관을 대체하지 않는 대응 보조 도구입니다. "
-        "공식 기관을 통해 사실과 절차를 다시 확인하세요."
+    st.markdown(
+        '<div class="footer-note">본 서비스는 금융회사·수사기관을 대체하지 않는 대응 보조 도구입니다.<br>'
+        '중요한 사실과 절차는 반드시 공식 기관을 통해 다시 확인하세요.</div>',
+        unsafe_allow_html=True,
     )
 
 
