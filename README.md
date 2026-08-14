@@ -3,19 +3,36 @@
 금융사기 의심 상황을 구조화하고, 확인된 피해 상태에 맞는 공식 대응
 지침을 우선순위대로 제공하기 위한 웹서비스 MVP입니다.
 
-## 현재 구현 단계
+## MVP 기능
 
-Phase 1에서는 다음 안전 기반을 구현합니다.
-
+- 분석 전 고정 긴급 안내
 - 외부 AI 전송 전 민감정보 마스킹
-- 사용자 행동 상태와 분석 결과 데이터 모델
-- 표준 라이브러리 기반 자동 테스트
+- Structured Outputs 기반 행동 상태 추출
+- 추가 확인 질문과 다차원 피해 상태 판단
+- 공식 출처 기반 행동 지침 조합
+- 6개 샘플 시나리오와 장애 fallback
 
 전체 범위는 [MVP 구현 기획서](docs/planning/mvp-plan.md)를 참고하세요.
 
-## 테스트
+## 로컬 실행
+
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt -r requirements-dev.txt
+streamlit run app.py
+```
+
+자유 입력 분석에는 서버 환경변수 `OPENAI_API_KEY`가 필요합니다. 키가 없어도
+샘플 시연과 고정 긴급 안내는 동작합니다. `.env`와
+`.streamlit/secrets.toml`은 Git에서 제외됩니다.
+
+## 검증
 
 ```bash
 python -m pytest --cov=src
-ruff check src tests
+ruff check app.py src tests
 ```
+
+기능 기준은 [기능명세서](docs/functional-spec.md), 배포 절차는
+[릴리스 체크리스트](docs/release-checklist.md)를 참고하세요.

@@ -15,6 +15,8 @@ class SampleCase:
     label: str
     text: str
     analysis: StructuredAnalysis
+    expected_level: int
+    required_guide_ids: frozenset[str]
 
 
 def load_samples(path: str | Path) -> tuple[SampleCase, ...]:
@@ -41,6 +43,8 @@ def load_samples(path: str | Path) -> tuple[SampleCase, ...]:
                         "actions": actions,
                     }
                 ),
+                expected_level=item["expected_level"],
+                required_guide_ids=frozenset(item["required_guide_ids"]),
             )
         )
     if len({sample.id for sample in samples}) != len(samples):
