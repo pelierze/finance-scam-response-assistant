@@ -3,5 +3,6 @@ __pycache__/
 .pytest_cache/
 .coverage
 .env
+.streamlit/secrets.toml
 .venv/
 venv/

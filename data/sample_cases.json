@@ -4,41 +4,53 @@
     "label": "의심 문자만 수신",
     "text": "제가 결제하지 않은 카드 결제 문자가 왔고 확인 링크가 있지만 누르지는 않았습니다.",
     "actions": {"suspicious_contact_received": "done", "link_clicked": "denied"},
-    "risk_signals": ["결제 사칭", "외부 링크 유도"]
+    "risk_signals": ["결제 사칭", "외부 링크 유도"],
+    "expected_level": 1,
+    "required_guide_ids": ["CONTACT_STOP_01"]
   },
   {
     "id": "link_clicked",
     "label": "택배 문자 링크 클릭",
     "text": "택배 주소를 확인하라는 문자의 링크를 눌렀는데 이상한 페이지가 나왔습니다.",
     "actions": {"suspicious_contact_received": "done", "link_clicked": "done"},
-    "risk_signals": ["택배 사칭", "외부 링크 유도"]
+    "risk_signals": ["택배 사칭", "외부 링크 유도"],
+    "expected_level": 2,
+    "required_guide_ids": ["CONTACT_STOP_01", "SMISHING_REPORT_01"]
   },
   {
     "id": "app_installed",
     "label": "검찰 사칭 앱 설치",
     "text": "검찰이라고 전화가 와서 제 계좌가 범죄에 사용됐다고 했고 보내준 앱을 설치했습니다.",
     "actions": {"suspicious_contact_received": "done", "app_installed": "done"},
-    "risk_signals": ["수사기관 사칭", "범죄 연루 공포 유발", "앱 설치 유도"]
+    "risk_signals": ["수사기관 사칭", "범죄 연루 공포 유발", "앱 설치 유도"],
+    "expected_level": 3,
+    "required_guide_ids": ["CONTACT_STOP_01", "DEVICE_EXPOSURE_01", "AUTH_EXPOSURE_01"]
   },
   {
     "id": "information_shared",
     "label": "개인정보·계좌정보 전달",
     "text": "은행 직원이라고 해서 주민등록정보와 계좌번호를 알려줬습니다.",
     "actions": {"suspicious_contact_received": "done", "personal_info_shared": "done", "financial_info_shared": "done"},
-    "risk_signals": ["금융회사 사칭", "개인정보 요구"]
+    "risk_signals": ["금융회사 사칭", "개인정보 요구"],
+    "expected_level": 4,
+    "required_guide_ids": ["CONTACT_STOP_01", "PERSONAL_DATA_01"]
   },
   {
     "id": "money_transferred",
     "label": "안전계좌 송금",
     "text": "검찰이 안전계좌로 옮겨야 한다고 해서 1천만 원을 송금했습니다.",
     "actions": {"suspicious_contact_received": "done", "money_transferred": "done"},
-    "risk_signals": ["수사기관 사칭", "안전계좌 송금 요구"]
+    "risk_signals": ["수사기관 사칭", "안전계좌 송금 요구"],
+    "expected_level": 5,
+    "required_guide_ids": ["CONTACT_STOP_01", "TRANSFER_01", "EVIDENCE_01"]
   },
   {
     "id": "ambiguous_app",
     "label": "앱 설치 여부 불명확",
     "text": "앱을 설치하라고 해서 확인해 봤는데 뭔가 이상합니다.",
     "actions": {"suspicious_contact_received": "done", "app_installed": "unknown"},
-    "risk_signals": ["앱 설치 유도"]
+    "risk_signals": ["앱 설치 유도"],
+    "expected_level": 1,
+    "required_guide_ids": ["CONTACT_STOP_01"]
   }
 ]
