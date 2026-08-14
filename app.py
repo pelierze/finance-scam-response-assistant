@@ -9,6 +9,7 @@ from pathlib import Path
 import streamlit as st
 
 from src.analyzer import OpenAIStructuredExtractor, analyze_text
+from src.local_extractor import LocalKoreanRuleExtractor
 from src.models import ActionStatus, StructuredAnalysis
 from src.question_engine import apply_answers, select_questions
 from src.response_service import compose_guides, load_guides
@@ -286,18 +287,18 @@ def main() -> None:
             st.session_state.sample_mode = True
         else:
             api_key = os.getenv("OPENAI_API_KEY", "")
-            if not api_key:
-                st.session_state.analysis = None
-                st.error(
-                    "현재 자유 입력 자동 분석을 사용할 수 없습니다. 샘플 상황을 선택하거나 "
-                    "공식 긴급 안내를 먼저 확인하세요."
-                )
-            else:
+            if api_key:
                 result = analyze_text(situation, OpenAIStructuredExtractor(api_key=api_key))
-                st.session_state.analysis = result.analysis
-                st.session_state.sample_mode = False
                 if result.used_fallback:
-                    st.warning("자동 분석을 완료하지 못했습니다. 고정 긴급 안내를 우선 확인하세요.")
+                    result = analyze_text(situation, LocalKoreanRuleExtractor())
+                    st.session_state.analysis_mode = "local_fallback"
+                else:
+                    st.session_state.analysis_mode = "llm"
+            else:
+                result = analyze_text(situation, LocalKoreanRuleExtractor())
+                st.session_state.analysis_mode = "local"
+            st.session_state.analysis = result.analysis
+            st.session_state.sample_mode = False
 
     analysis = st.session_state.get("analysis")
     if analysis:
@@ -307,6 +308,16 @@ def main() -> None:
             st.success(confirmation_feedback, icon="✅")
         if st.session_state.get("sample_mode"):
             st.caption("샘플 모드: 사전 정의된 기대 분석 결과로 전체 대응 흐름을 시연합니다.")
+        elif st.session_state.get("analysis_mode") == "local":
+            st.info(
+                "현재는 주요 금융사기 표현을 인식하는 로컬 규칙 분석 결과입니다. "
+                "불명확한 항목은 추가 질문과 공식 채널을 통해 확인하세요."
+            )
+        elif st.session_state.get("analysis_mode") == "local_fallback":
+            st.warning(
+                "AI 연결이 원활하지 않아 로컬 규칙으로 분석했습니다. "
+                "고정 긴급 안내와 공식 확인 경로를 우선 확인하세요."
+            )
         answered_actions = set(
             st.session_state.get("clarification_answered_actions", ())
         )
