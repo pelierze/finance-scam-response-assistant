@@ -52,5 +52,26 @@
     "risk_signals": ["앱 설치 유도"],
     "expected_level": 1,
     "required_guide_ids": ["CONTACT_STOP_01"]
+  },
+  {
+    "id": "compound_harm",
+    "label": "앱 설치·개인정보·송금 복합 피해",
+    "text": "검찰이라는 사람의 안내로 앱을 설치하고 주민등록정보를 알려준 뒤 안전계좌로 돈을 송금했습니다.",
+    "actions": {
+      "suspicious_contact_received": "done",
+      "app_installed": "done",
+      "personal_info_shared": "done",
+      "money_transferred": "done"
+    },
+    "risk_signals": ["수사기관 사칭", "악성 앱 설치 유도", "개인정보 요구", "안전계좌 송금 요구"],
+    "expected_level": 5,
+    "required_guide_ids": [
+      "CONTACT_STOP_01",
+      "TRANSFER_01",
+      "DEVICE_EXPOSURE_01",
+      "AUTH_EXPOSURE_01",
+      "PERSONAL_DATA_01",
+      "EVIDENCE_01"
+    ]
   }
 ]

@@ -30,11 +30,25 @@ class ResponseServiceTests(unittest.TestCase):
 
     def test_compound_harm_includes_all_required_guides(self) -> None:
         guides = compose_guides(
-            assessment_with("app_installed", "auth_secret_shared", "money_transferred"),
+            assessment_with(
+                "app_installed",
+                "personal_info_shared",
+                "auth_secret_shared",
+                "money_transferred",
+            ),
             load_guides(GUIDES_PATH),
         )
         ids = {guide.action_id for guide in guides}
-        self.assertTrue({"TRANSFER_01", "DEVICE_EXPOSURE_01", "AUTH_EXPOSURE_01", "EVIDENCE_01"} <= ids)
+        self.assertTrue(
+            {
+                "TRANSFER_01",
+                "DEVICE_EXPOSURE_01",
+                "PERSONAL_DATA_01",
+                "AUTH_EXPOSURE_01",
+                "EVIDENCE_01",
+            }
+            <= ids
+        )
         priorities = [guide.priority for guide in guides]
         self.assertEqual(priorities, sorted(priorities, key={"IMMEDIATE": 0, "NEXT": 1, "EVIDENCE": 2, "PREVENTION": 3}.get))
 

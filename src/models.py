@@ -154,3 +154,30 @@ class ExposureAssessment:
             self.authentication,
             self.financial_loss,
         )
+
+    @property
+    def active_dimensions(self) -> frozenset[str]:
+        """Return every exposure dimension that contains a confirmed action."""
+
+        dimensions = {
+            "contact": self.contact,
+            "web": self.web,
+            "device": self.device,
+            "personal_data": self.personal_data,
+            "financial_data": self.financial_data,
+            "authentication": self.authentication,
+            "financial_loss": self.financial_loss,
+        }
+        return frozenset(name for name, actions in dimensions.items() if actions)
+
+    @property
+    def is_compound(self) -> bool:
+        """Whether confirmed harm spans at least two exposure dimensions."""
+
+        return len(self.harm_dimensions) >= 2
+
+    @property
+    def harm_dimensions(self) -> frozenset[str]:
+        """Return material harm dimensions, excluding initial contact alone."""
+
+        return self.active_dimensions - {"contact"}
