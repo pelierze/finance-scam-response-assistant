@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import Enum, IntEnum
 from typing import Any
 
 
@@ -15,6 +15,17 @@ class ActionStatus(str, Enum):
     DENIED = "denied"
     UNKNOWN = "unknown"
     NOT_MENTIONED = "not_mentioned"
+
+
+class RepresentativeLevel(IntEnum):
+    """User-facing summary level; never a replacement for exposure details."""
+
+    INSUFFICIENT_INFORMATION = 0
+    SUSPICIOUS_CONTACT = 1
+    WEB_EXPOSURE = 2
+    DEVICE_EXPOSURE = 3
+    INFORMATION_EXPOSURE = 4
+    FINANCIAL_LOSS = 5
 
 
 TRACKED_ACTIONS = (
@@ -114,4 +125,32 @@ class StructuredAnalysis:
                 name: ActionObservation.from_dict(observation)
                 for name, observation in actions.items()
             },
+        )
+
+
+@dataclass(frozen=True)
+class ExposureAssessment:
+    """Deterministic assessment retaining every confirmed exposure dimension."""
+
+    contact: frozenset[str] = frozenset()
+    web: frozenset[str] = frozenset()
+    device: frozenset[str] = frozenset()
+    personal_data: frozenset[str] = frozenset()
+    financial_data: frozenset[str] = frozenset()
+    authentication: frozenset[str] = frozenset()
+    financial_loss: frozenset[str] = frozenset()
+    representative_level: RepresentativeLevel = (
+        RepresentativeLevel.INSUFFICIENT_INFORMATION
+    )
+
+    @property
+    def confirmed_exposures(self) -> frozenset[str]:
+        return frozenset().union(
+            self.contact,
+            self.web,
+            self.device,
+            self.personal_data,
+            self.financial_data,
+            self.authentication,
+            self.financial_loss,
         )
