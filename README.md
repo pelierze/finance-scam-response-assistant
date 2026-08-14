@@ -14,6 +14,11 @@
 
 전체 범위는 [MVP 구현 기획서](docs/planning/mvp-plan.md)를 참고하세요.
 
+## 공개 MVP
+
+- Streamlit Community Cloud: https://finance-scam-response-assistant-6mgmff5zupef2elhdfsgy9.streamlit.app/
+- 배포 브랜치: `main`
+
 ## 로컬 실행
 
 ```bash
@@ -37,3 +42,6 @@ ruff check app.py src tests
 
 기능 기준은 [기능명세서](docs/functional-spec.md), 배포 절차는
 [릴리스 체크리스트](docs/release-checklist.md)를 참고하세요.
+
+현재 자동 테스트는 41개이며 전체 `src` 커버리지는 92%, 로컬 자연어 추출기
+커버리지는 100%다. 실제 LLM 자연어 성능은 별도의 평가 데이터로 검증해야 한다.
