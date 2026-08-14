@@ -50,7 +50,7 @@
     "applies_when": ["personal_info_shared", "financial_info_shared"],
     "priority": "NEXT",
     "source_title": "개인정보가 노출된 것 같다면 이렇게!",
-    "source_url": "https://www.fsc.go.kr/edu/cardnews?cnId=1527",
+    "source_url": "https://www.fsc.go.kr/no040104?cnId=1527",
     "issuing_authority": "금융위원회",
     "verified_at": "2026-08-14"
   },
