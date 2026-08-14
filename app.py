@@ -38,6 +38,16 @@ def load_styles() -> str:
     return f"<style>{stylesheet}</style>"
 
 
+def clear_clarification_state() -> None:
+    """Clear feedback and radio values left by a previous analysis."""
+
+    st.session_state.pop("confirmation_feedback", None)
+    st.session_state.pop("clarification_answered_actions", None)
+    for key in tuple(st.session_state):
+        if key.startswith("answer_"):
+            del st.session_state[key]
+
+
 def status_summary(assessment) -> tuple[tuple[str, str, str], ...]:
     """Return label, value, and semantic color tone for the status grid."""
 
@@ -234,6 +244,7 @@ def main() -> None:
         )
 
     if analyze_clicked:
+        clear_clarification_state()
         if selected and situation.strip() == selected.text:
             st.session_state.analysis = selected.analysis
             st.session_state.sample_mode = True
@@ -254,25 +265,88 @@ def main() -> None:
 
     analysis = st.session_state.get("analysis")
     if analysis:
+        confirmation_feedback = st.session_state.pop("confirmation_feedback", None)
+        if confirmation_feedback:
+            st.toast("추가 답변이 정상적으로 반영되었습니다.", icon="✅")
+            st.success(confirmation_feedback, icon="✅")
         if st.session_state.get("sample_mode"):
             st.caption("샘플 모드: 사전 정의된 기대 분석 결과로 전체 대응 흐름을 시연합니다.")
-        questions = select_questions(analysis)
+        answered_actions = set(
+            st.session_state.get("clarification_answered_actions", ())
+        )
+        questions = tuple(
+            question
+            for question in select_questions(analysis)
+            if question.action not in answered_actions
+        )
         if questions:
             st.subheader("추가 확인")
-            answers = {
-                question.action: ANSWER_MAP[
-                    st.radio(
+            st.caption("답변을 반영하면 아래 위험 상태와 행동 지침을 즉시 다시 계산합니다.")
+            with st.form("clarification_form", border=True):
+                raw_answers = {
+                    question.action: st.radio(
                         question.prompt,
                         ANSWER_MAP.keys(),
+                        index=None,
                         horizontal=True,
                         key=f"answer_{question.action}",
                     )
-                ]
-                for question in questions
-            }
-            if st.button("답변 반영하기"):
-                analysis = apply_answers(analysis, answers)
-                st.session_state.analysis = analysis
+                    for question in questions
+                }
+                answers_submitted = st.form_submit_button(
+                    "답변 반영하고 결과 업데이트",
+                    type="primary",
+                    use_container_width=True,
+                )
+            if answers_submitted:
+                unanswered_count = sum(answer is None for answer in raw_answers.values())
+                if unanswered_count:
+                    st.warning(
+                        f"답변하지 않은 항목이 {unanswered_count}개 있습니다. "
+                        "각 항목을 선택한 뒤 다시 눌러주세요.",
+                        icon="⚠️",
+                    )
+                else:
+                    answers = {
+                        action: ANSWER_MAP[answer]
+                        for action, answer in raw_answers.items()
+                        if answer is not None
+                    }
+                    with st.spinner("답변을 반영해 대응 결과를 다시 계산하고 있습니다..."):
+                        updated_analysis = apply_answers(analysis, answers)
+                        answered_actions.update(answers)
+                        follow_up_questions = tuple(
+                            question
+                            for question in select_questions(updated_analysis)
+                            if question.action not in answered_actions
+                        )
+                        unknown_count = sum(
+                            status is ActionStatus.UNKNOWN
+                            for status in answers.values()
+                        )
+                        st.session_state.analysis = updated_analysis
+                        st.session_state.clarification_answered_actions = tuple(
+                            sorted(answered_actions)
+                        )
+                        if follow_up_questions:
+                            feedback = (
+                                "답변을 반영해 결과를 업데이트했습니다. "
+                                "답변 내용에 따라 새로운 확인 질문이 "
+                                f"{len(follow_up_questions)}개 생성되었습니다."
+                            )
+                        elif unknown_count:
+                            feedback = (
+                                "답변을 모두 반영했습니다. ‘잘 모르겠음’으로 답한 "
+                                f"{unknown_count}개 항목은 미확인 상태로 유지하고, "
+                                "안전 우선 기준으로 행동 지침을 업데이트했습니다."
+                            )
+                        else:
+                            feedback = (
+                                "답변을 모두 반영해 위험 상태와 행동 지침을 업데이트했습니다. "
+                                "아래의 ‘지금 즉시 할 일’을 확인하세요."
+                            )
+                        st.session_state.confirmation_feedback = feedback
+                    st.rerun()
         render_result(analysis)
 
     st.markdown(

@@ -65,6 +65,15 @@ p, label { line-height:1.65; }
 .st-key-analysis_panel .stButton { margin-top:-.9rem; }
 .st-key-analysis_panel .stButton > button { min-height:3.05rem; font-size:.88rem; }
 
+/* Clarification flow */
+.st-key-clarification_form { margin:.25rem 0 1rem; }
+.st-key-clarification_form [data-testid="stForm"] { border-color:#cfe0f5;
+  border-radius:16px; background:rgba(248,251,255,.88); padding:1rem 1.1rem 1.1rem; }
+.st-key-clarification_form [data-testid="stWidgetLabel"] p { color:#183b66;
+  font-weight:750; letter-spacing:-.015em; }
+.st-key-clarification_form [data-testid="stFormSubmitButton"] { margin-top:.35rem; }
+.st-key-clarification_form [data-testid="stFormSubmitButton"] button { min-height:3rem; }
+
 /* Streamlit surfaces */
 [data-testid="stVerticalBlockBorderWrapper"] { border:1px solid var(--line) !important; border-radius:18px !important;
   background:rgba(255,255,255,.94); box-shadow:0 10px 28px rgba(31,64,104,.07); padding:.3rem; }
