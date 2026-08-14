@@ -9,9 +9,9 @@ SAMPLES_PATH = Path(__file__).parents[1] / "data" / "sample_cases.json"
 GUIDES_PATH = Path(__file__).parents[1] / "data" / "response_guides.json"
 
 
-def test_loads_six_unique_valid_samples() -> None:
+def test_loads_seven_unique_valid_samples() -> None:
     samples = load_samples(SAMPLES_PATH)
-    assert len(samples) == 6
+    assert len(samples) == 7
     assert len({sample.id for sample in samples}) == len(samples)
 
 
@@ -23,6 +23,15 @@ def test_money_transfer_sample_is_confirmed() -> None:
 def test_ambiguous_sample_remains_unknown() -> None:
     sample = next(sample for sample in load_samples(SAMPLES_PATH) if sample.id == "ambiguous_app")
     assert sample.analysis.actions["app_installed"].status is ActionStatus.UNKNOWN
+
+
+def test_compound_sample_confirms_all_three_harm_types() -> None:
+    sample = next(
+        sample for sample in load_samples(SAMPLES_PATH) if sample.id == "compound_harm"
+    )
+    assert sample.analysis.actions["app_installed"].status is ActionStatus.DONE
+    assert sample.analysis.actions["personal_info_shared"].status is ActionStatus.DONE
+    assert sample.analysis.actions["money_transferred"].status is ActionStatus.DONE
 
 
 def test_every_sample_matches_expected_level_and_required_guides() -> None:

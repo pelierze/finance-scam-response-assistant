@@ -30,6 +30,15 @@ ANSWER_MAP = {
     "잘 모르겠음": ActionStatus.UNKNOWN,
     "해당 없음": ActionStatus.DENIED,
 }
+DIMENSION_LABELS = {
+    "contact": "의심 연락",
+    "web": "링크·웹",
+    "device": "기기",
+    "personal_data": "개인정보",
+    "financial_data": "금융정보",
+    "authentication": "인증정보",
+    "financial_loss": "금전 피해",
+}
 
 def load_styles() -> str:
     """Load the app stylesheet from the static asset file."""
@@ -43,6 +52,7 @@ def clear_clarification_state() -> None:
 
     st.session_state.pop("confirmation_feedback", None)
     st.session_state.pop("clarification_answered_actions", None)
+    st.session_state.pop("clarification_completed", None)
     for key in tuple(st.session_state):
         if key.startswith("answer_"):
             del st.session_state[key]
@@ -80,6 +90,31 @@ def render_status_grid(assessment) -> None:
     st.markdown(f'<div class="status-grid">{cards}</div>', unsafe_allow_html=True)
 
 
+def render_compound_summary(assessment) -> None:
+    """Explain when several exposure dimensions require a combined response."""
+
+    if not assessment.is_compound:
+        return
+    ordered_dimensions = tuple(
+        dimension
+        for dimension in DIMENSION_LABELS
+        if dimension in assessment.harm_dimensions
+    )
+    chips = "".join(
+        f'<span class="compound-chip">{escape(DIMENSION_LABELS[dimension])}</span>'
+        for dimension in ordered_dimensions
+    )
+    tone = "danger" if assessment.financial_loss else "caution"
+    st.markdown(
+        f'<div class="compound-summary {tone}">'
+        f'<div class="compound-title">복합 노출 감지 · {len(ordered_dimensions)}개 영역</div>'
+        f'<div class="compound-chips">{chips}</div>'
+        '<div class="compound-copy">한 가지 피해 단계만 처리하지 않고, 확인된 모든 노출의 '
+        '대응 행동을 합쳐 긴급도 순으로 안내합니다.</div></div>',
+        unsafe_allow_html=True,
+    )
+
+
 def render_guide_card(guide, *, number: int | None = None) -> None:
     heading = f"{number}. {guide.title}" if number is not None else guide.title
     with st.container(border=True):
@@ -104,6 +139,7 @@ def render_result(analysis: StructuredAnalysis) -> None:
     later = [guide for guide in guides if guide.priority != "IMMEDIATE"]
 
     st.markdown("---")
+    render_compound_summary(assessment)
     st.header("🚨 지금 즉시 할 일")
     st.markdown(
         '<div class="section-note">빨간 카드는 피해 확산을 막기 위해 먼저 실행할 행동입니다.</div>',
@@ -274,11 +310,14 @@ def main() -> None:
         answered_actions = set(
             st.session_state.get("clarification_answered_actions", ())
         )
-        questions = tuple(
-            question
-            for question in select_questions(analysis)
-            if question.action not in answered_actions
-        )
+        if st.session_state.get("clarification_completed"):
+            questions = ()
+        else:
+            questions = tuple(
+                question
+                for question in select_questions(analysis)
+                if question.action not in answered_actions
+            )
         if questions:
             st.subheader("추가 확인")
             st.caption("답변을 반영하면 아래 위험 상태와 행동 지침을 즉시 다시 계산합니다.")
@@ -315,11 +354,6 @@ def main() -> None:
                     with st.spinner("답변을 반영해 대응 결과를 다시 계산하고 있습니다..."):
                         updated_analysis = apply_answers(analysis, answers)
                         answered_actions.update(answers)
-                        follow_up_questions = tuple(
-                            question
-                            for question in select_questions(updated_analysis)
-                            if question.action not in answered_actions
-                        )
                         unknown_count = sum(
                             status is ActionStatus.UNKNOWN
                             for status in answers.values()
@@ -328,13 +362,8 @@ def main() -> None:
                         st.session_state.clarification_answered_actions = tuple(
                             sorted(answered_actions)
                         )
-                        if follow_up_questions:
-                            feedback = (
-                                "답변을 반영해 결과를 업데이트했습니다. "
-                                "답변 내용에 따라 새로운 확인 질문이 "
-                                f"{len(follow_up_questions)}개 생성되었습니다."
-                            )
-                        elif unknown_count:
+                        st.session_state.clarification_completed = True
+                        if unknown_count:
                             feedback = (
                                 "답변을 모두 반영했습니다. ‘잘 모르겠음’으로 답한 "
                                 f"{unknown_count}개 항목은 미확인 상태로 유지하고, "
@@ -342,7 +371,7 @@ def main() -> None:
                             )
                         else:
                             feedback = (
-                                "답변을 모두 반영해 위험 상태와 행동 지침을 업데이트했습니다. "
+                                "추가 확인을 완료하고 위험 상태와 행동 지침을 업데이트했습니다. "
                                 "아래의 ‘지금 즉시 할 일’을 확인하세요."
                             )
                         st.session_state.confirmation_feedback = feedback
