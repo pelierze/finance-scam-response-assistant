@@ -1,0 +1,9 @@
+# Test and quality tooling
+pytest==9.1.1
+pytest-cov==7.1.0
+pytest-mock==3.15.1
+ruff==0.16.3
+
+# Submission and official-source document readers
+pypdf==6.16.0
+python-docx==1.2.0
