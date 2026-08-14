@@ -1,0 +1,79 @@
+[
+  {
+    "action_id": "CONTACT_STOP_01",
+    "title": "상대방과 연락 중단",
+    "instruction": "상대방과 통화·메시지·화면 공유를 중단하고, 상대방이 알려준 링크나 연락처를 사용하지 마세요.",
+    "applies_when": ["suspicious_contact_received"],
+    "priority": "IMMEDIATE",
+    "source_title": "보이스피싱 피해를 입었다면?",
+    "source_url": "https://www.fsc.go.kr/no040101?cnId=2107",
+    "issuing_authority": "금융위원회",
+    "verified_at": "2026-08-14"
+  },
+  {
+    "action_id": "TRANSFER_01",
+    "title": "금융회사 또는 112에 피해 신고",
+    "instruction": "본인 또는 사기범 계좌의 금융회사나 112에 지체 없이 피해 사실을 알리고 계좌 지급정지를 요청하세요.",
+    "applies_when": ["money_transferred"],
+    "priority": "IMMEDIATE",
+    "source_title": "보이스피싱 피해를 입었다면?",
+    "source_url": "https://www.fsc.go.kr/no040101?cnId=2107",
+    "issuing_authority": "금융위원회",
+    "verified_at": "2026-08-14"
+  },
+  {
+    "action_id": "DEVICE_EXPOSURE_01",
+    "title": "악성 앱 점검 및 삭제",
+    "instruction": "모바일 백신으로 의심 앱을 점검·삭제하거나, 삭제가 어렵다면 휴대전화 서비스센터의 도움을 받으세요.",
+    "applies_when": ["app_installed", "remote_control_enabled"],
+    "priority": "IMMEDIATE",
+    "source_title": "피싱 주의 권고 및 악성 앱 삭제 방법",
+    "source_url": "https://spam.kisa.or.kr/spam/na/ntt/selectNttInfo.do?bbsId=1001&mi=1019&nttSn=2701",
+    "issuing_authority": "한국인터넷진흥원",
+    "verified_at": "2026-08-14"
+  },
+  {
+    "action_id": "AUTH_EXPOSURE_01",
+    "title": "노출 가능 인증수단 폐기·재발급",
+    "instruction": "악성 앱이 설치된 기기에서 금융서비스를 이용했거나 인증정보를 전달했다면 금융회사에 연락해 인증수단의 폐기·재발급 필요 여부를 확인하세요.",
+    "applies_when": ["app_installed", "auth_secret_shared"],
+    "priority": "NEXT",
+    "source_title": "피싱 주의 권고 및 악성 앱 삭제 방법",
+    "source_url": "https://spam.kisa.or.kr/spam/na/ntt/selectNttInfo.do?bbsId=1001&mi=1019&nttSn=2701",
+    "issuing_authority": "한국인터넷진흥원",
+    "verified_at": "2026-08-14"
+  },
+  {
+    "action_id": "PERSONAL_DATA_01",
+    "title": "개인정보 노출 사실 등록",
+    "instruction": "금융감독원 개인정보노출자 사고예방시스템에 노출 사실을 등록해 명의도용 금융거래 위험을 줄이세요.",
+    "applies_when": ["personal_info_shared", "financial_info_shared"],
+    "priority": "NEXT",
+    "source_title": "개인정보가 노출된 것 같다면 이렇게!",
+    "source_url": "https://www.fsc.go.kr/edu/cardnews?cnId=1527",
+    "issuing_authority": "금융위원회",
+    "verified_at": "2026-08-14"
+  },
+  {
+    "action_id": "EVIDENCE_01",
+    "title": "피해 증빙자료 보존",
+    "instruction": "이체내역, 문자·메신저 대화내역, 상대방 연락처 등 피해 관련 자료를 삭제하지 말고 보존하세요.",
+    "applies_when": ["money_transferred"],
+    "priority": "EVIDENCE",
+    "source_title": "사이버범죄 신고시스템 신고 안내",
+    "source_url": "https://ecrm.police.go.kr/minwon/main",
+    "issuing_authority": "경찰청",
+    "verified_at": "2026-08-14"
+  },
+  {
+    "action_id": "SMISHING_REPORT_01",
+    "title": "스미싱 상담·신고",
+    "instruction": "의심 문자나 QR코드는 한국인터넷진흥원 118 또는 전자통신금융사기 통합신고대응센터의 공식 신고 경로로 상담·신고하세요.",
+    "applies_when": ["link_clicked"],
+    "priority": "NEXT",
+    "source_title": "스미싱·큐싱 공격 대응",
+    "source_url": "https://www.kisa.or.kr/1020601",
+    "issuing_authority": "한국인터넷진흥원",
+    "verified_at": "2026-08-14"
+  }
+]
