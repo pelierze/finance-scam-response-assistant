@@ -30,7 +30,7 @@ def test_compound_sample_confirms_all_three_harm_types() -> None:
         sample for sample in load_samples(SAMPLES_PATH) if sample.id == "compound_harm"
     )
     assert sample.analysis.actions["app_installed"].status is ActionStatus.DONE
-    assert sample.analysis.actions["personal_info_shared"].status is ActionStatus.DONE
+    assert sample.analysis.actions["auth_secret_shared"].status is ActionStatus.DONE
     assert sample.analysis.actions["money_transferred"].status is ActionStatus.DONE
 
 
