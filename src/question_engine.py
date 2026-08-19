@@ -31,7 +31,9 @@ QUESTION_CATALOG = {
         "financial_info_shared", "계좌번호나 카드정보를 전달했나요?", 50
     ),
     "personal_info_shared": ClarificationQuestion(
-        "personal_info_shared", "개인정보나 신분증 사진을 전달했나요?", 60
+        "personal_info_shared",
+        "입력하신 개인정보를 상대방에게 실제로 전달했나요?",
+        60,
     ),
     "link_clicked": ClarificationQuestion(
         "link_clicked", "문자나 메신저의 링크를 실제로 눌렀나요?", 70

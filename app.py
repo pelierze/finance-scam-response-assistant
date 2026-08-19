@@ -40,6 +40,28 @@ DIMENSION_LABELS = {
     "authentication": "인증정보",
     "financial_loss": "금전 피해",
 }
+REDACTION_LABELS = {
+    "resident_id": "주민등록번호",
+    "phone": "전화번호",
+    "email": "이메일 주소",
+    "card": "카드번호",
+    "auth_secret": "인증정보",
+    "account": "계좌번호",
+}
+CLARIFICATION_LABELS = {
+    "money_transferred": "송금·현금 전달 여부",
+    "remote_control_enabled": "원격제어 허용 여부",
+    "app_installed": "앱 설치 여부",
+    "auth_secret_shared": "인증정보 전달 여부",
+    "financial_info_shared": "금융정보 전달 여부",
+    "personal_info_shared": "개인정보 전달 여부",
+    "link_clicked": "링크 클릭 여부",
+}
+ANSWER_LABELS = {
+    ActionStatus.DONE: "예",
+    ActionStatus.DENIED: "아니오",
+    ActionStatus.UNKNOWN: "잘 모르겠음",
+}
 
 def load_styles() -> str:
     """Load the app stylesheet from the static asset file."""
@@ -54,41 +76,140 @@ def clear_clarification_state() -> None:
     st.session_state.pop("confirmation_feedback", None)
     st.session_state.pop("clarification_answered_actions", None)
     st.session_state.pop("clarification_completed", None)
+    st.session_state.pop("redacted_types", None)
+    st.session_state.pop("clarification_answers", None)
     for key in tuple(st.session_state):
         if key.startswith("answer_"):
             del st.session_state[key]
 
 
-def status_summary(assessment) -> tuple[tuple[str, str, str], ...]:
-    """Return label, value, and semantic color tone for the status grid."""
+def privacy_notice_text(redacted_types: tuple[str, ...]) -> str | None:
+    """Describe local redaction without ever echoing a sensitive value."""
 
-    states = (
-        ("기기 노출", bool(assessment.device), "위험", "danger"),
+    labels = tuple(
+        REDACTION_LABELS[data_type]
+        for data_type in redacted_types
+        if data_type in REDACTION_LABELS
+    )
+    if not labels:
+        return None
+    detected = ", ".join(dict.fromkeys(labels))
+    return (
+        f"민감정보가 감지되어 {detected}를 외부 AI 전송 전에 "
+        "자동 마스킹했습니다."
+    )
+
+
+def no_immediate_guide_message(*, has_follow_up_guides: bool) -> str:
+    """Avoid claiming there is no response when confirmed harm has a later guide."""
+
+    if has_follow_up_guides:
+        return "확인된 노출이 있습니다. 아래의 후속 대응 지침을 바로 확인하세요."
+    return (
+        "입력만으로 확정된 긴급 행동이 없습니다. "
+        "추가 확인과 공식 채널 확인이 필요합니다."
+    )
+
+
+def _display_action_state(
+    analysis: StructuredAnalysis,
+    actions: tuple[str, ...],
+    *,
+    confirmed_value: str,
+    confirmed_tone: str,
+) -> tuple[str, str]:
+    statuses = {analysis.actions[action].status for action in actions}
+    if ActionStatus.DONE in statuses:
+        return confirmed_value, confirmed_tone
+    if statuses & {ActionStatus.UNKNOWN, ActionStatus.REQUESTED}:
+        return "추가 확인 필요", "caution"
+    if ActionStatus.DENIED in statuses:
+        return "사용자가 아니오로 확인", "info"
+    return "언급 없음", "info"
+
+
+def status_summary(analysis: StructuredAnalysis) -> tuple[tuple[str, str, str], ...]:
+    """Preserve confirmed, denied, uncertain, and unmentioned states in the UI."""
+
+    dimensions = (
+        ("기기 노출", ("app_installed", "remote_control_enabled"), "위험", "danger"),
         (
             "개인정보 노출",
-            bool(assessment.personal_data or assessment.financial_data),
+            ("personal_info_shared", "financial_info_shared"),
             "확인됨",
             "caution",
         ),
-        ("인증정보 노출", bool(assessment.authentication), "확인됨", "caution"),
-        ("금전 피해", bool(assessment.financial_loss), "발생", "danger"),
+        ("인증정보 노출", ("auth_secret_shared",), "확인됨", "caution"),
+        ("금전 피해", ("money_transferred",), "발생", "danger"),
     )
     return tuple(
-        (label, active_value if active else "확인 안 됨", tone if active else "info")
-        for label, active, active_value, tone in states
+        (
+            label,
+            *_display_action_state(
+                analysis,
+                actions,
+                confirmed_value=confirmed_value,
+                confirmed_tone=confirmed_tone,
+            ),
+        )
+        for label, actions, confirmed_value, confirmed_tone in dimensions
     )
 
 
-def render_status_grid(assessment) -> None:
+def render_status_grid(analysis: StructuredAnalysis) -> None:
     cards = "".join(
         (
             f'<div class="status-card {tone}">'
             f'<div class="label">{escape(label)}</div>'
             f'<div class="value">{escape(value)}</div></div>'
         )
-        for label, value, tone in status_summary(assessment)
+        for label, value, tone in status_summary(analysis)
     )
     st.markdown(f'<div class="status-grid">{cards}</div>', unsafe_allow_html=True)
+
+
+def clarification_answer_summary(
+    answers: dict[str, str],
+) -> tuple[tuple[str, str], ...]:
+    """Return stable user-facing labels for answers retained in session state."""
+
+    rows = []
+    for action, label in CLARIFICATION_LABELS.items():
+        raw_status = answers.get(action)
+        if raw_status is None:
+            continue
+        try:
+            status = ActionStatus(raw_status)
+        except ValueError:
+            continue
+        if status in ANSWER_LABELS:
+            rows.append((label, ANSWER_LABELS[status]))
+    return tuple(rows)
+
+
+def level_zero_explanation(
+    analysis: StructuredAnalysis, redacted_types: tuple[str, ...]
+) -> str:
+    """Explain why no confirmed exposure currently produces LEVEL 0."""
+
+    statuses = {observation.status for observation in analysis.actions.values()}
+    sentences = ["현재 입력과 확인 답변에서 금융사기 피해 행동은 확인되지 않았습니다."]
+    if ActionStatus.DENIED in statuses:
+        sentences.append("일부 행동은 사용자가 발생하지 않았다고 확인했습니다.")
+    if statuses & {ActionStatus.UNKNOWN, ActionStatus.REQUESTED}:
+        sentences.append("아직 불명확한 행동은 추가 확인이 필요합니다.")
+    labels = [
+        REDACTION_LABELS[data_type]
+        for data_type in redacted_types
+        if data_type in REDACTION_LABELS
+    ]
+    if labels:
+        sentences.append(
+            f"입력된 {', '.join(dict.fromkeys(labels))}는 자동 마스킹했으며, "
+            "입력란에 존재했다는 사실만으로 상대방에게 전달된 것으로 판단하지 않습니다."
+        )
+    sentences.append("안전하다는 확정은 아니므로 필요한 경우 공식 채널로 확인하세요.")
+    return " ".join(sentences)
 
 
 def render_compound_summary(assessment) -> None:
@@ -131,7 +252,12 @@ def render_guide_card(guide, *, number: int | None = None) -> None:
         )
 
 
-def render_result(analysis: StructuredAnalysis) -> None:
+def render_result(
+    analysis: StructuredAnalysis,
+    *,
+    redacted_types: tuple[str, ...] = (),
+    clarification_answers: dict[str, str] | None = None,
+) -> None:
     assessment = assess_exposure(analysis)
     guides = compose_guides(
         assessment, load_guides(ROOT / "data" / "response_guides.json")
@@ -150,9 +276,7 @@ def render_result(analysis: StructuredAnalysis) -> None:
         for number, guide in enumerate(immediate, 1):
             render_guide_card(guide, number=number)
     else:
-        st.info(
-            "입력만으로 확정된 긴급 행동이 없습니다. 추가 확인과 공식 채널 확인이 필요합니다."
-        )
+        st.info(no_immediate_guide_message(has_follow_up_guides=bool(later)))
 
     st.header("현재 노출 상태")
     st.markdown(
@@ -160,17 +284,21 @@ def render_result(analysis: StructuredAnalysis) -> None:
         '“확인 안 됨”은 안전하다는 뜻이 아닙니다.</div>',
         unsafe_allow_html=True,
     )
-    render_status_grid(assessment)
+    render_status_grid(analysis)
+
+    answer_rows = clarification_answer_summary(clarification_answers or {})
+    if answer_rows:
+        with st.container(border=True):
+            st.subheader("추가 확인 답변")
+            for label, answer in answer_rows:
+                st.write(f"**{label}:** {answer}")
 
     level = int(assessment.representative_level)
     with st.container(border=True):
         st.subheader(f"대표 피해 단계 · LEVEL {level}")
         st.write(LEVEL_NAMES[level])
     if level == 0:
-        st.warning(
-            "현재 입력만으로 위험 상태를 판단하기 어렵습니다. 안전하다는 의미가 아니며 "
-            "상대방이 제공한 연락처가 아닌 공식 채널로 확인하세요."
-        )
+        st.warning(level_zero_explanation(analysis, redacted_types))
 
     if analysis.risk_signals:
         with st.expander("감지된 위험 신호와 상세 상태"):
@@ -285,6 +413,7 @@ def main() -> None:
         if selected and situation.strip() == selected.text:
             st.session_state.analysis = selected.analysis
             st.session_state.sample_mode = True
+            st.session_state.redacted_types = ()
         else:
             api_key = os.getenv("OPENAI_API_KEY", "")
             if api_key:
@@ -298,6 +427,7 @@ def main() -> None:
                 result = analyze_text(situation, LocalKoreanRuleExtractor())
                 st.session_state.analysis_mode = "local"
             st.session_state.analysis = result.analysis
+            st.session_state.redacted_types = result.redacted_types
             st.session_state.sample_mode = False
 
     analysis = st.session_state.get("analysis")
@@ -318,6 +448,11 @@ def main() -> None:
                 "AI 연결이 원활하지 않아 로컬 규칙으로 분석했습니다. "
                 "고정 긴급 안내와 공식 확인 경로를 우선 확인하세요."
             )
+        privacy_notice = privacy_notice_text(
+            tuple(st.session_state.get("redacted_types", ()))
+        )
+        if privacy_notice:
+            st.info(privacy_notice, icon="🛡️")
         answered_actions = set(
             st.session_state.get("clarification_answered_actions", ())
         )
@@ -364,7 +499,11 @@ def main() -> None:
                     }
                     with st.spinner("답변을 반영해 대응 결과를 다시 계산하고 있습니다..."):
                         updated_analysis = apply_answers(analysis, answers)
-                        answered_actions.update(answers)
+                        answered_actions.update(
+                            action
+                            for action, status in answers.items()
+                            if status is not ActionStatus.UNKNOWN
+                        )
                         unknown_count = sum(
                             status is ActionStatus.UNKNOWN
                             for status in answers.values()
@@ -373,12 +512,23 @@ def main() -> None:
                         st.session_state.clarification_answered_actions = tuple(
                             sorted(answered_actions)
                         )
-                        st.session_state.clarification_completed = True
+                        retained_answers = dict(
+                            st.session_state.get("clarification_answers", {})
+                        )
+                        retained_answers.update(
+                            {
+                                action: status.value
+                                for action, status in answers.items()
+                            }
+                        )
+                        st.session_state.clarification_answers = retained_answers
+                        st.session_state.clarification_completed = not unknown_count
                         if unknown_count:
                             feedback = (
                                 "답변을 모두 반영했습니다. ‘잘 모르겠음’으로 답한 "
                                 f"{unknown_count}개 항목은 미확인 상태로 유지하고, "
-                                "안전 우선 기준으로 행동 지침을 업데이트했습니다."
+                                "안전 우선 기준으로 행동 지침을 업데이트했습니다. "
+                                "사실을 확인하면 아래 질문에 다시 답할 수 있습니다."
                             )
                         else:
                             feedback = (
@@ -387,7 +537,13 @@ def main() -> None:
                             )
                         st.session_state.confirmation_feedback = feedback
                     st.rerun()
-        render_result(analysis)
+        render_result(
+            analysis,
+            redacted_types=tuple(st.session_state.get("redacted_types", ())),
+            clarification_answers=dict(
+                st.session_state.get("clarification_answers", {})
+            ),
+        )
 
     st.markdown(
         '<div class="footer-note">본 서비스는 금융회사·수사기관을 대체하지 않는 대응 보조 도구입니다.<br>'

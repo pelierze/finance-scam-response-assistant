@@ -6,7 +6,7 @@ from src.models import (
     ActionStatus,
     StructuredAnalysis,
 )
-from src.question_engine import apply_answers, select_questions
+from src.question_engine import QUESTION_CATALOG, apply_answers, select_questions
 
 
 def analysis_with(**statuses: ActionStatus) -> StructuredAnalysis:
@@ -20,6 +20,14 @@ def analysis_with(**statuses: ActionStatus) -> StructuredAnalysis:
 
 
 class QuestionEngineTests(unittest.TestCase):
+    def test_personal_information_question_distinguishes_input_from_sharing(self) -> None:
+        question = QUESTION_CATALOG["personal_info_shared"]
+
+        self.assertEqual(
+            question.prompt,
+            "입력하신 개인정보를 상대방에게 실제로 전달했나요?",
+        )
+
     def test_prioritizes_money_and_device_uncertainty(self) -> None:
         questions = select_questions(
             analysis_with(
