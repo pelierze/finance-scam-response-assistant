@@ -6,3 +6,7 @@ __pycache__/
 .streamlit/secrets.toml
 .venv/
 venv/
+
+# Unreviewed user feedback may contain sensitive or large source files.
+data/feedback/incoming/*
+!data/feedback/incoming/.gitkeep

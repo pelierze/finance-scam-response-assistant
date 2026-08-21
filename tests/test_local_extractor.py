@@ -62,7 +62,28 @@ def test_completed_app_installation_and_transfer_do_not_need_clarification() -> 
         LocalKoreanRuleExtractor(),
     )
 
-    assert result.analysis.actions["suspicious_contact_received"].status is ActionStatus.DONE
+    assert (
+        result.analysis.actions["suspicious_contact_received"].status
+        is ActionStatus.DONE
+    )
     assert result.analysis.actions["app_installed"].status is ActionStatus.DONE
     assert result.analysis.actions["money_transferred"].status is ActionStatus.DONE
     assert select_questions(result.analysis) == ()
+
+
+def test_conflicting_completion_and_denial_remains_unknown() -> None:
+    analysis = analyze("앱을 설치했는데 설치하지 않았다고도 말했습니다.")
+
+    assert analysis.actions["app_installed"].status is ActionStatus.UNKNOWN
+    assert [question.action for question in select_questions(analysis)] == [
+        "app_installed"
+    ]
+
+
+def test_explicit_correction_overrides_previous_financial_information_denial() -> None:
+    analysis = analyze(
+        "계좌번호는 알려주지 않았어요. 아, 계좌번호는 알려준 게 맞습니다."
+    )
+
+    assert analysis.actions["financial_info_shared"].status is ActionStatus.DONE
+    assert select_questions(analysis) == ()
