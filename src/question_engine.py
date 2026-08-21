@@ -44,7 +44,7 @@ QUESTION_CATALOG = {
 def select_questions(
     analysis: StructuredAnalysis, *, limit: int = 3
 ) -> tuple[ClarificationQuestion, ...]:
-    """Return the most urgent unanswered questions without overwhelming users."""
+    """Ask only about explicitly requested or uncertain actions."""
 
     if limit < 1:
         raise ValueError("Question limit must be at least one")
@@ -55,33 +55,6 @@ def select_questions(
         if action in QUESTION_CATALOG
         and observation.status in {ActionStatus.REQUESTED, ActionStatus.UNKNOWN}
     }
-
-    done = {
-        action
-        for action, observation in analysis.actions.items()
-        if observation.status is ActionStatus.DONE
-    }
-    not_mentioned = {
-        action
-        for action, observation in analysis.actions.items()
-        if observation.status is ActionStatus.NOT_MENTIONED
-    }
-
-    if "link_clicked" in done:
-        candidates.update(
-            {"app_installed", "remote_control_enabled"} & not_mentioned
-        )
-    if done & {"app_installed", "remote_control_enabled"}:
-        candidates.update(
-            {
-                "personal_info_shared",
-                "financial_info_shared",
-                "auth_secret_shared",
-            }
-            & not_mentioned
-        )
-    if done and "money_transferred" in not_mentioned:
-        candidates.add("money_transferred")
 
     ordered = sorted(
         (QUESTION_CATALOG[action] for action in candidates),
