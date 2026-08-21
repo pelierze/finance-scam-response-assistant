@@ -14,7 +14,7 @@ def test_feedback_comparison_discovers_all_reviewed_case_files() -> None:
     cases = MODULE.load_cases(MODULE.DEFAULT_GLOB)
 
     assert [case["id"] for case in cases] == [
-        f"CASE-{number:03d}" for number in range(1, 21)
+        f"CASE-{number:03d}" for number in range(1, 41)
     ]
 
 

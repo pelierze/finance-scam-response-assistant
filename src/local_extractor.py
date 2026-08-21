@@ -44,23 +44,71 @@ _ATTACKER_CLAIM = _compile(
     r"상대방(?:은|이|이\s*라고\s*한\s*사람).{0,45}(?:말하|주장하|했다고)"
 )
 _EXPLICIT_DONE = {
-    "financial_info_shared": _compile(
-        r"(?:계좌번호|카드번호).{0,18}(?:알려준\s*게\s*맞|알려준\s*건\s*맞)"
+    "link_clicked": _compile(
+        r"링크를\s*누른|"
+        r"아까는\s*아무것도\s*안\s*했.{0,55}생각해보니.{0,40}링크를\s*눌러보기는\s*했|"
+        r"오늘.{0,25}링크는\s*안\s*눌렀.{0,55}어제.{0,30}링크는\s*눌렀"
     ),
-    "auth_secret_shared": _compile(r"(?:인증번호|문자로\s*온\s*번호).{0,45}읽어주"),
-    "money_transferred": _compile(r"\d+(?:만)?\s*원.{0,24}보낸"),
+    "personal_info_shared": _compile(r"(?:이름.{0,15})?생년월일까지만\s*입력했"),
+    "financial_info_shared": _compile(
+        r"(?:계좌번호|카드번호).{0,25}(?:알려준\s*게\s*맞|알려준\s*건\s*맞|번호를\s*불러줬)"
+    ),
+    "auth_secret_shared": _compile(
+        r"(?:인증번호|문자로\s*온\s*(?:인증)?번호).{0,45}(?:읽어주|불러줬)"
+    ),
+    "remote_control_enabled": _compile(r"화면\s*공유.{0,25}연결은\s*했"),
+    "money_transferred": _compile(r"\d+(?:만)?\s*원.{0,24}보낸|돈을\s*보내긴\s*했"),
 }
 _EXPLICIT_DENIED = {
-    "link_clicked": _compile(r"링크.{0,30}누르거나.{0,25}적은\s*없"),
-    "app_installed": _compile(r"(?:앱|프로그램).{0,35}(?:깐|설치한)\s*적은\s*없"),
-    "money_transferred": _compile(r"송금한\s*적이\s*없"),
+    "link_clicked": _compile(
+        r"링크.{0,30}누르거나.{0,25}적은\s*없|"
+        r"아무것도\s*누르지\s*않|"
+        r"(?:앱이나\s*링크|링크는).{0,20}건드리지\s*않"
+    ),
+    "app_installed": _compile(
+        r"(?:앱|프로그램).{0,35}(?:깐|설치한)\s*적은\s*없|"
+        r"(?:앱이나\s*링크|앱은).{0,20}건드리지\s*않|"
+        r"실제로는\s*설치하지\s*않|"
+        r"제\s*휴대폰에는\s*아무것도\s*설치하지\s*않"
+    ),
+    "personal_info_shared": _compile(
+        r"정보도\s*입력하지\s*않|개인정보를\s*알려준\s*적은\s*없|"
+        r"신분증\s*사진.{0,45}실제로\s*전송하지는\s*않"
+    ),
+    "financial_info_shared": _compile(r"계좌번호\s*자체는\s*알려주지\s*않"),
+    "money_transferred": _compile(
+        r"송금한\s*적이\s*없|"
+        r"제\s*다른\s*계좌로.{0,60}이체했.{0,80}상대방\s*계좌로\s*보낸\s*건\s*(?:아니|아닙)"
+    ),
 }
+_DENIAL_OVERRIDES_DONE = {
+    "app_installed": _compile(r"거짓말.{0,30}실제로는\s*설치하지\s*않"),
+    "personal_info_shared": _compile(
+        r"상대방.{0,35}이미\s*알고.{0,50}저는.{0,25}알려준\s*적은\s*없"
+    ),
+    "financial_info_shared": _compile(
+        r"은행\s*이름까지만.{0,35}계좌번호\s*자체는\s*알려주지\s*않"
+    ),
+    "money_transferred": _compile(
+        r"제\s*다른\s*계좌로.{0,60}이체했.{0,80}상대방\s*계좌로\s*보낸\s*건\s*(?:아니|아닙)"
+    ),
+}
+_INJECTION_INSTRUCTION = _compile(r"이전\s*내용은\s*무시하고.{0,80}처리해")
+_REAL_FACT_MARKER = _compile(r"실제로는")
+_REPORTED_LIE_CONTEXT = _compile(r"설치했다고\s*거짓말.{0,35}실제로는")
+_OWN_ACCOUNT_TRANSFER = _compile(
+    r"제\s*다른\s*계좌로.{0,60}이체했.{0,80}상대방\s*계좌로\s*보낸\s*건\s*(?:아니|아닙)"
+)
 _AUTH_DETAIL_PATTERNS = (
-    ("password_shared", ActionStatus.DENIED, _compile(r"비밀번호.{0,18}안\s*알려줬")),
+    (
+        "password_shared",
+        ActionStatus.DENIED,
+        _compile(r"비밀번호.{0,18}(?:안\s*알려줬|안\s*말했)"),
+    ),
     (
         "auth_code_shared",
         ActionStatus.DONE,
-        _compile(r"(?:인증번호|문자로\s*온\s*번호).{0,45}읽어주"),
+        _compile(r"(?:인증번호|문자로\s*온\s*(?:인증)?번호).{0,45}(?:읽어주|불러줬)"),
     ),
 )
 
@@ -156,7 +204,7 @@ ACTION_PATTERNS = {
             r"(?:송금|이체|입금)(?:까지)?\s*(?:을|를)?\s*(?:했|함|했습니다)|(?:돈|현금|상품권|\d+(?:만)?\s*원).{0,18}(?:보냈|전달했|건넸)|안전계좌.{0,18}(?:옮겼|보냈)"
         ),
         _compile(
-            r"(?:송금|이체|입금)하지\s*않|(?:돈|현금|상품권).{0,20}(?:안\s*보냈|안\s*보내|안보냄|보내지|전달하지|건네지)\s*(?:않|$|[.!?])?|(?:송금|이체)\s*안\s*했"
+            r"(?:송금|이체|입금)(?:은|는|을|를|도)?\s*하지\s*않|(?:돈|현금|상품권).{0,20}(?:안\s*보냈|안\s*보내|안보냄|보내지|전달하지|건네지)\s*(?:않|$|[.!?])?|(?:송금|이체)\s*안\s*했"
         ),
         _compile(
             r"(?:송금|이체|입금)하라고|(?:돈|현금|상품권).{0,18}(?:보내|보내라|전달하|건네)라고|안전계좌.{0,18}(?:옮기|보내)라고"
@@ -179,6 +227,16 @@ def _current_incident_text(text: str) -> str:
         if not (_PAST_MARKER.search(sentence) and not _CURRENT_MARKER.search(sentence))
     ]
     return " ".join(current)
+
+
+def _strip_injection_instruction(text: str) -> str:
+    """Discard an explicit output-manipulation clause before stated real facts."""
+
+    instruction = _INJECTION_INSTRUCTION.search(text)
+    fact = _REAL_FACT_MARKER.search(text)
+    if instruction and fact and instruction.start() < fact.start():
+        return text[fact.end() :].strip()
+    return text
 
 
 def _is_third_party_match(text: str, match: re.Match[str]) -> bool:
@@ -207,7 +265,7 @@ def _has_user_done(
             for match in patterns.done.finditer(text)
             if not _is_third_party_match(text, match)
             and not _is_attacker_claim(text, match)
-            and not text[match.end() : match.end() + 3].startswith("는지")
+            and not text[match.end() : match.end() + 3].startswith(("는지", "다면"))
             and not _NEGATION_MARKER.search(match.group(0))
         ),
         None,
@@ -234,6 +292,10 @@ def _observation(
     *,
     allow_contextual_refusal: bool = False,
 ) -> dict[str, str | None]:
+    if action == "suspicious_contact_received" and _REPORTED_LIE_CONTEXT.search(text):
+        return {"status": ActionStatus.NOT_MENTIONED.value, "evidence": None}
+    if action == "financial_info_shared" and _OWN_ACCOUNT_TRANSFER.search(text):
+        return {"status": ActionStatus.NOT_MENTIONED.value, "evidence": None}
     requested = bool(patterns.requested.search(text))
     denied_match = patterns.denied.search(text)
     if (
@@ -251,6 +313,14 @@ def _observation(
         and _DID_NOTHING.search(text)
     )
     if did_nothing:
+        explicit_done = _EXPLICIT_DONE.get(action)
+        if explicit_done_match := explicit_done.search(text) if explicit_done else None:
+            return {
+                "status": ActionStatus.DONE.value,
+                "evidence": _detailed_evidence(
+                    text, action, explicit_done_match.group(0)
+                ),
+            }
         return {"status": ActionStatus.DENIED.value, "evidence": None}
     if (
         allow_contextual_refusal
@@ -260,6 +330,9 @@ def _observation(
         denied = True
     done_match = _has_user_done(text, action, patterns)
     if done_match and denied:
+        denial_override = _DENIAL_OVERRIDES_DONE.get(action)
+        if denial_override and denial_override.search(text):
+            return {"status": ActionStatus.DENIED.value, "evidence": None}
         if _EXPLICIT_DONE.get(action) and _EXPLICIT_DONE[action].search(text):
             return {
                 "status": ActionStatus.DONE.value,
@@ -301,7 +374,7 @@ class LocalKoreanRuleExtractor:
     """Extract common high-risk actions without an external model call."""
 
     def extract(self, text: str) -> dict[str, object]:
-        text = _current_incident_text(text)
+        text = _strip_injection_instruction(_current_incident_text(text))
         actions = {
             action: _observation(
                 text,

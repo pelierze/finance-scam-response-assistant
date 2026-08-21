@@ -9,12 +9,13 @@
 
 검토가 끝난 사례 중 회귀 테스트나 공식 평가에 사용할 항목만 별도 검증 후 `data/evaluation_cases.json` 또는 테스트 코드로 옮긴다.
 
-현재 `reviewed/context-cases-001-010.jsonl`과 `reviewed/context-cases-011-020.jsonl`에
+현재 `reviewed/context-cases-001-010.jsonl`부터
+`reviewed/context-cases-031-040.jsonl`까지
 정답 행동·노출·추가 질문·마스킹 기대치를 기록했으며, 자동 회귀
 테스트가 이름 규칙에 맞는 모든 파일을 누적해 읽는다.
 동일 사례의 사용자 입력만 한 줄씩 복사해 수동 테스트할 수 있도록 `reviewed/test-inputs.txt`도 함께 관리한다. 새 사례 묶음을 검토할 때 해당 파일 끝에 같은 순서로 입력을 추가한다.
 기준 코드와 수정 코드의 상태·질문·노출 결과는 `scripts/compare_feedback_cases.py`로 비교하며,
-최신 결과는 `reviewed/comparison-cases-001-020.md`에 기록한다.
+최신 결과는 `reviewed/comparison-cases-001-040.md`에 기록한다.
 
 ```bash
 PYTHONPATH=. python scripts/compare_feedback_cases.py --baseline-ref origin/main

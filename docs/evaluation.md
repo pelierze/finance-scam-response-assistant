@@ -62,7 +62,7 @@ OPENAI_API_KEY=... PYTHONPATH=. python scripts/evaluate_natural_language.py --ex
 
 ## 로컬 규칙 기준 성능
 
-2026-08-18 최초 baseline 이후 CASE 1~20 문맥 규칙을 반영해 2026-08-21에 45건 전체를 다시 측정했다.
+2026-08-18 최초 baseline 이후 CASE 1~40 문맥 규칙을 반영해 2026-08-21에 45건 전체를 다시 측정했다.
 
 | 지표 | 결과 |
 |---|---:|
@@ -88,8 +88,8 @@ OPENAI_API_KEY=... PYTHONPATH=. python scripts/evaluate_natural_language.py --ex
 - [O] 15개 요구 범주를 균등하게 포함
 - [O] 데이터 스키마 및 정답 내부 일관성 자동 검증
 - [O] 재현 가능한 로컬 baseline 측정 도구
-- [O] 주체·시간·요구/거절·모순 CASE 1~20 회귀 세트
-- [O] CASE 1~20 기준 코드 2/20, 수정 코드 20/20 전후 비교(세부 evidence 포함)
+- [O] 주체·시간·요구/거절·모순·가정·사후 조치·부분 제공 CASE 1~40 회귀 세트
+- [O] CASE 1~40 기준 코드 6/40, 수정 코드 40/40 전후 비교(세부 evidence 포함)
 - [ ] 평가 라벨 2인 교차 검토
 - [ ] 추가 질문 정답을 현재 질문 정책에 맞게 교차 검토
 - [ ] 실제 LLM 45건 평가 및 결과 기록

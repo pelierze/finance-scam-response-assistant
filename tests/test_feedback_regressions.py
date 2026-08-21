@@ -23,9 +23,9 @@ def test_feedback_cases_are_complete_and_unique() -> None:
     cases = load_cases()
 
     assert [case["id"] for case in cases] == [
-        f"CASE-{number:03d}" for number in range(1, 21)
+        f"CASE-{number:03d}" for number in range(1, 41)
     ]
-    assert len({case["id"] for case in cases}) == 20
+    assert len({case["id"] for case in cases}) == 40
     assert all(set(case["expected_actions"]) <= set(TRACKED_ACTIONS) for case in cases)
 
 
