@@ -46,6 +46,57 @@
 
 ## 실행 방법
 
+### 제출용 문맥 평가 50건
+
+로컬 규칙 추출기:
+
+```bash
+PYTHONPATH=. python scripts/evaluate_feedback_suite.py \
+  --extractor local --summary-only --output artifacts/evaluation/local-50.json
+```
+
+실제 LLM API(비밀키는 환경 변수로만 주입):
+
+```bash
+PYTHONPATH=. python scripts/evaluate_feedback_suite.py \
+  --extractor openai --model gpt-5.6-luna --summary-only \
+  --output artifacts/evaluation/llm-50.json
+```
+
+로컬/LLM 사례별 비교:
+
+```bash
+PYTHONPATH=. python scripts/compare_feedback_evaluations.py \
+  artifacts/evaluation/local-50.json artifacts/evaluation/llm-50.json \
+  --output artifacts/evaluation/local-vs-llm-50.json
+```
+
+50건은 부분 라벨 평가다. 행동 상태 정확도는 명시된 행동 라벨, 노출 정확도는
+`expected_exposures`와 `forbidden_exposures`, 필요 질문 정확도는
+`expected_questions`, 금지 질문 발생률은 `forbidden_questions`를 분모로 한다.
+고위험 필수 행동지침 누락률은 `expected_level >= 3` 사례에서 정답의 `done`
+행동에 적용되는 공식 지침 중 실제 결과에서 누락된 비율이다. API fallback 사례는 통과로
+집계하지 않는다.
+
+2026-08-21 로컬 규칙 추출기 결과:
+
+| 제출 지표 | 결과 | 평가 라벨 |
+|---|---:|---:|
+| 사례 통과율 | 100.00% (50/50) | 50건 |
+| 행동 상태 정확도 | 100.00% | 128개 |
+| 노출 정확도 | 100.00% | 128개 |
+| 대표 LEVEL 정확도 | 100.00% | 50건 |
+| 필요 질문 정확도 | 100.00% | 7개 |
+| 금지 질문 발생률 | 0.00% | 117개 |
+| 민감정보 마스킹 성공률 | 100.00% | 2개 |
+| 고위험 필수 행동지침 누락률 | 0.00% | 61개 |
+
+마스킹 지표는 현재 양성 라벨이 2개뿐이므로 제출 전 주민등록번호·계좌번호·카드번호·
+이메일·인증번호 사례를 추가해 표본을 보강한다. 실제 LLM 결과는 API 키가 설정된 환경에서
+동일한 50건과 지표 정의로 별도 측정하며, fallback 발생 건은 성공 결과에서 제외한다.
+
+### 기존 15개 범주 평가 45건
+
 로컬 규칙 추출기:
 
 ```bash
@@ -62,15 +113,15 @@ OPENAI_API_KEY=... PYTHONPATH=. python scripts/evaluate_natural_language.py --ex
 
 ## 로컬 규칙 기준 성능
 
-2026-08-18 최초 baseline 이후 CASE 1~40 문맥 규칙을 반영해 2026-08-21에 45건 전체를 다시 측정했다.
+2026-08-18 최초 baseline 이후 CASE 1~50 문맥 규칙을 반영해 2026-08-21에 45건 전체를 다시 측정했다.
 
 | 지표 | 결과 |
 |---|---:|
-| 행동 상태 정확도 | 88.89% |
+| 행동 상태 정확도 | 89.17% |
 | 사례 완전일치율 | 28.89% |
 | `done` precision | 100.00% |
-| `done` recall | 54.55% |
-| `done` F1 | 70.59% |
+| `done` recall | 56.06% |
+| `done` F1 | 71.84% |
 | 노출 영역 완전일치율 | 44.44% |
 | 대표 LEVEL 정확도 | 82.22% |
 | 추가 질문 완전일치율 | 33.33% |
@@ -88,9 +139,10 @@ OPENAI_API_KEY=... PYTHONPATH=. python scripts/evaluate_natural_language.py --ex
 - [O] 15개 요구 범주를 균등하게 포함
 - [O] 데이터 스키마 및 정답 내부 일관성 자동 검증
 - [O] 재현 가능한 로컬 baseline 측정 도구
-- [O] 주체·시간·요구/거절·모순·가정·사후 조치·부분 제공 CASE 1~40 회귀 세트
-- [O] CASE 1~40 기준 코드 6/40, 수정 코드 40/40 전후 비교(세부 evidence 포함)
+- [O] 주체·시간·요구/거절·모순·가정·사후 조치·부분 제공 CASE 1~50 회귀 세트
+- [O] CASE 1~50 기준 코드 9/50, 수정 코드 50/50 전후 비교(세부 evidence 포함)
+- [O] CASE 1~50 제출 지표 산출기 및 로컬 결과 50/50
 - [ ] 평가 라벨 2인 교차 검토
 - [ ] 추가 질문 정답을 현재 질문 정책에 맞게 교차 검토
-- [ ] 실제 LLM 45건 평가 및 결과 기록
+- [ ] 실제 LLM 50건 평가 및 로컬 결과 비교 기록
 - [ ] 실패 사례 개선 후 데이터셋을 바꾸지 않고 재평가

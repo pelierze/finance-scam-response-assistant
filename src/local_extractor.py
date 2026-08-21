@@ -31,6 +31,7 @@ _CORRECTION_MARKER = _compile(r"아니[,，]?\s*(?:생각해\s*보니|다시\s*�
 _NEGATION_MARKER = _compile(r"(?:^|\s)(?:안|못)\s*|않")
 _DID_NOTHING = _compile(
     r"아무것도\s*(?:하지|안\s*하)\s*않|아무것도\s*안\s*했|"
+    r"아무것도\s*대답하지\s*않|"
     r"아무\s*정보도\s*(?:주지|알려주지|말하지|보내지)\s*않"
 )
 _GENERIC_REFUSAL = _compile(
@@ -50,14 +51,19 @@ _EXPLICIT_DONE = {
         r"오늘.{0,25}링크는\s*안\s*눌렀.{0,55}어제.{0,30}링크는\s*눌렀"
     ),
     "personal_info_shared": _compile(r"(?:이름.{0,15})?생년월일까지만\s*입력했"),
+    "app_installed": _compile(r"깔라는\s*거\s*깔고"),
     "financial_info_shared": _compile(
-        r"(?:계좌번호|카드번호).{0,25}(?:알려준\s*게\s*맞|알려준\s*건\s*맞|번호를\s*불러줬)"
+        r"(?:계좌번호|카드번호).{0,25}(?:알려준\s*게\s*맞|알려준\s*건\s*맞|번호를\s*불러줬|불러줬)"
     ),
     "auth_secret_shared": _compile(
-        r"(?:인증번호|문자로\s*온\s*(?:인증)?번호).{0,45}(?:읽어주|불러줬)"
+        r"(?:인증번호|문자로\s*온\s*(?:인증)?번호).{0,45}(?:읽어주|불러줬)|"
+        r"링크\s*누르고.{0,25}깔라는\s*거\s*깔고\s*번호도\s*불러줬"
     ),
-    "remote_control_enabled": _compile(r"화면\s*공유.{0,25}연결은\s*했"),
-    "money_transferred": _compile(r"\d+(?:만)?\s*원.{0,24}보낸|돈을\s*보내긴\s*했"),
+    "remote_control_enabled": _compile(r"화면\s*공유.{0,25}(?:연결은\s*했|연결했)"),
+    "money_transferred": _compile(
+        r"\d+(?:만)?\s*원.{0,24}보낸|돈을\s*보내긴\s*했|"
+        r"\d+(?:만)?원을\s*보내긴\s*했.{0,30}정확히\s*기억났"
+    ),
 }
 _EXPLICIT_DENIED = {
     "link_clicked": _compile(
@@ -77,7 +83,7 @@ _EXPLICIT_DENIED = {
     ),
     "financial_info_shared": _compile(r"계좌번호\s*자체는\s*알려주지\s*않"),
     "money_transferred": _compile(
-        r"송금한\s*적이\s*없|"
+        r"송금한\s*적이\s*없|돈을\s*보낸\s*적이\s*없|돈은\s*안\s*줬|"
         r"제\s*다른\s*계좌로.{0,60}이체했.{0,80}상대방\s*계좌로\s*보낸\s*건\s*(?:아니|아닙)"
     ),
 }
@@ -89,6 +95,9 @@ _DENIAL_OVERRIDES_DONE = {
     "financial_info_shared": _compile(
         r"은행\s*이름까지만.{0,35}계좌번호\s*자체는\s*알려주지\s*않"
     ),
+    "auth_secret_shared": _compile(
+        r"계좌번호는\s*불러줬지만\s*인증번호는\s*안\s*알려줬"
+    ),
     "money_transferred": _compile(
         r"제\s*다른\s*계좌로.{0,60}이체했.{0,80}상대방\s*계좌로\s*보낸\s*건\s*(?:아니|아닙)"
     ),
@@ -96,6 +105,10 @@ _DENIAL_OVERRIDES_DONE = {
 _INJECTION_INSTRUCTION = _compile(r"이전\s*내용은\s*무시하고.{0,80}처리해")
 _REAL_FACT_MARKER = _compile(r"실제로는")
 _REPORTED_LIE_CONTEXT = _compile(r"설치했다고\s*거짓말.{0,35}실제로는")
+_ATTACKER_ACCOUNT_CLAIM = _compile(
+    r"그\s*사람이\s*자기가\s*제\s*계좌를.{0,35}옮겨놨다고"
+)
+_UNCERTAIN_APP_CONTEXT = _compile(r"앱은\s*깔았던\s*것\s*같기도.{0,30}(?:잘\s*)?모르")
 _OWN_ACCOUNT_TRANSFER = _compile(
     r"제\s*다른\s*계좌로.{0,60}이체했.{0,80}상대방\s*계좌로\s*보낸\s*건\s*(?:아니|아닙)"
 )
@@ -115,9 +128,9 @@ _AUTH_DETAIL_PATTERNS = (
 
 ACTION_PATTERNS = {
     "suspicious_contact_received": ActionPatterns(
-        _compile(r"전화|문자|메시지|메신저|카톡|연락|검찰|경찰|금감원|은행"),
+        _compile(r"전화|문자|메시지|메신저|카톡|연락|검찰|경찰|금감원|금융감독원|은행"),
         _compile(
-            r"(?:전화|문자|메시지|연락).{0,15}(?:왔|와서|받|옴)|(?:오늘|방금).{0,20}(?:문자|메시지|연락)|(?:검찰|경찰|금감원|은행).{0,20}(?:라며|라고|사칭|전화)"
+            r"(?:전화|문자|메시지|연락).{0,15}(?:왔|와서|받|옴)|(?:오늘|방금).{0,20}(?:문자|메시지|연락)|(?:검찰|경찰|금감원|금융감독원|은행).{0,20}(?:라며|라고|사칭|전화)"
         ),
         _compile(r"(?:전화|문자|메시지|연락).{0,10}(?:받지|오지)\s*않|연락\s*없"),
         _compile(r"연락하라고|전화하라고"),
@@ -125,7 +138,7 @@ ACTION_PATTERNS = {
     "link_clicked": ActionPatterns(
         _compile(r"링크|URL|주소|사이트|웹페이지"),
         _compile(
-            r"(?:링크|URL|주소).{0,22}(?:눌렀|눌러|클릭했|접속했|열었|들어가\s*봤)|사이트.{0,12}(?:들어갔|접속했)"
+            r"(?:링크|URL|주소).{0,22}(?:눌렀|눌러|누르고|클릭했|접속했|열었|들어가\s*봤)|사이트.{0,12}(?:들어갔|접속했)"
         ),
         _compile(
             r"(?:링크|URL|주소).{0,35}(?:누르지|누른\s*적|누르거나|클릭하지|접속하지|열지).{0,12}(?:않|없)|(?:링크|URL).{0,15}(?:아직\s*)?안\s*(?:눌|클릭)|오늘.{0,35}(?:아직\s*)?안\s*(?:눌|클릭)"
@@ -296,6 +309,13 @@ def _observation(
         return {"status": ActionStatus.NOT_MENTIONED.value, "evidence": None}
     if action == "financial_info_shared" and _OWN_ACCOUNT_TRANSFER.search(text):
         return {"status": ActionStatus.NOT_MENTIONED.value, "evidence": None}
+    if action == "financial_info_shared" and _ATTACKER_ACCOUNT_CLAIM.search(text):
+        return {"status": ActionStatus.NOT_MENTIONED.value, "evidence": None}
+    if action == "app_installed" and _UNCERTAIN_APP_CONTEXT.search(text):
+        return {"status": ActionStatus.UNKNOWN.value, "evidence": None}
+    denial_override = _DENIAL_OVERRIDES_DONE.get(action)
+    if denial_override and denial_override.search(text):
+        return {"status": ActionStatus.DENIED.value, "evidence": None}
     requested = bool(patterns.requested.search(text))
     denied_match = patterns.denied.search(text)
     if (
@@ -330,9 +350,6 @@ def _observation(
         denied = True
     done_match = _has_user_done(text, action, patterns)
     if done_match and denied:
-        denial_override = _DENIAL_OVERRIDES_DONE.get(action)
-        if denial_override and denial_override.search(text):
-            return {"status": ActionStatus.DENIED.value, "evidence": None}
         if _EXPLICIT_DONE.get(action) and _EXPLICIT_DONE[action].search(text):
             return {
                 "status": ActionStatus.DONE.value,
