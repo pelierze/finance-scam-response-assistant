@@ -1,5 +1,6 @@
 from app import (
     clarification_answer_summary,
+    completed_clarification_actions,
     level_zero_explanation,
     no_immediate_guide_message,
     privacy_notice_text,
@@ -90,6 +91,14 @@ def test_clarification_answer_summary_keeps_actual_user_answers() -> None:
         ("앱 설치 여부", "잘 모르겠음"),
         ("개인정보 전달 여부", "아니오"),
     )
+
+
+def test_unknown_answer_marks_question_complete_for_current_analysis() -> None:
+    completed = completed_clarification_actions(
+        set(), {"personal_info_shared": ActionStatus.UNKNOWN}
+    )
+
+    assert completed == ("personal_info_shared",)
 
 
 def test_level_zero_explains_redaction_without_assuming_sharing() -> None:

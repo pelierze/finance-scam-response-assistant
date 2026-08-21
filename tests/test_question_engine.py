@@ -42,12 +42,20 @@ class QuestionEngineTests(unittest.TestCase):
             ["money_transferred", "app_installed"],
         )
 
-    def test_link_click_triggers_adaptive_device_questions(self) -> None:
+    def test_confirmed_and_unmentioned_actions_do_not_trigger_questions(self) -> None:
         questions = select_questions(analysis_with(link_clicked=ActionStatus.DONE))
-        actions = {question.action for question in questions}
+        self.assertEqual(questions, ())
+
+    def test_done_actions_are_excluded_when_another_action_is_uncertain(self) -> None:
+        questions = select_questions(
+            analysis_with(
+                app_installed=ActionStatus.DONE,
+                money_transferred=ActionStatus.UNKNOWN,
+            )
+        )
+
         self.assertEqual(
-            actions,
-            {"money_transferred", "remote_control_enabled", "app_installed"},
+            [question.action for question in questions], ["money_transferred"]
         )
 
     def test_applies_explicit_answer_without_mutating_original(self) -> None:

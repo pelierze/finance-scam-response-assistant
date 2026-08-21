@@ -1,6 +1,7 @@
 from src.analyzer import analyze_text
 from src.local_extractor import LocalKoreanRuleExtractor
 from src.models import ActionStatus
+from src.question_engine import select_questions
 from src.rule_engine import assess_exposure
 
 
@@ -53,3 +54,15 @@ def test_sensitive_values_are_redacted_before_local_extraction() -> None:
     assert set(result.redacted_types) == {"resident_id", "account"}
     assert result.analysis.actions["personal_info_shared"].status is ActionStatus.DONE
     assert result.analysis.actions["financial_info_shared"].status is ActionStatus.DONE
+
+
+def test_completed_app_installation_and_transfer_do_not_need_clarification() -> None:
+    result = analyze_text(
+        "전화가 와서 앱 설치를 하고 송금까지 했어요",
+        LocalKoreanRuleExtractor(),
+    )
+
+    assert result.analysis.actions["suspicious_contact_received"].status is ActionStatus.DONE
+    assert result.analysis.actions["app_installed"].status is ActionStatus.DONE
+    assert result.analysis.actions["money_transferred"].status is ActionStatus.DONE
+    assert select_questions(result.analysis) == ()

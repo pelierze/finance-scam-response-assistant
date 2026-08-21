@@ -187,6 +187,14 @@ def clarification_answer_summary(
     return tuple(rows)
 
 
+def completed_clarification_actions(
+    previously_answered: set[str], answers: dict[str, ActionStatus]
+) -> tuple[str, ...]:
+    """Mark every submitted question complete, including unknown answers."""
+
+    return tuple(sorted(previously_answered | set(answers)))
+
+
 def level_zero_explanation(
     analysis: StructuredAnalysis, redacted_types: tuple[str, ...]
 ) -> str:
@@ -499,18 +507,13 @@ def main() -> None:
                     }
                     with st.spinner("답변을 반영해 대응 결과를 다시 계산하고 있습니다..."):
                         updated_analysis = apply_answers(analysis, answers)
-                        answered_actions.update(
-                            action
-                            for action, status in answers.items()
-                            if status is not ActionStatus.UNKNOWN
-                        )
                         unknown_count = sum(
                             status is ActionStatus.UNKNOWN
                             for status in answers.values()
                         )
                         st.session_state.analysis = updated_analysis
-                        st.session_state.clarification_answered_actions = tuple(
-                            sorted(answered_actions)
+                        st.session_state.clarification_answered_actions = (
+                            completed_clarification_actions(answered_actions, answers)
                         )
                         retained_answers = dict(
                             st.session_state.get("clarification_answers", {})
@@ -522,13 +525,12 @@ def main() -> None:
                             }
                         )
                         st.session_state.clarification_answers = retained_answers
-                        st.session_state.clarification_completed = not unknown_count
+                        st.session_state.clarification_completed = True
                         if unknown_count:
                             feedback = (
                                 "답변을 모두 반영했습니다. ‘잘 모르겠음’으로 답한 "
                                 f"{unknown_count}개 항목은 미확인 상태로 유지하고, "
-                                "안전 우선 기준으로 행동 지침을 업데이트했습니다. "
-                                "사실을 확인하면 아래 질문에 다시 답할 수 있습니다."
+                                "안전 우선 기준으로 행동 지침을 업데이트했습니다."
                             )
                         else:
                             feedback = (
