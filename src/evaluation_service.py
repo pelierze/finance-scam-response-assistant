@@ -33,7 +33,7 @@ EVALUATION_CATEGORIES = frozenset(
     }
 )
 REDACTION_TYPES = frozenset(
-    {"resident_id", "phone", "email", "card", "auth_secret", "account"}
+    {"resident_id", "phone", "email", "card", "auth_code", "password", "account"}
 )
 
 

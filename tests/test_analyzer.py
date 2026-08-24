@@ -40,7 +40,7 @@ class AnalyzerTests(unittest.TestCase):
         result = analyze_text("인증번호 839201을 알려줬어요", extractor)
 
         self.assertNotIn("839201", extractor.inputs[0])
-        self.assertIn("auth_secret", result.redacted_types)
+        self.assertIn("auth_code", result.redacted_types)
         self.assertFalse(result.used_fallback)
         self.assertEqual(
             result.analysis.actions["auth_secret_shared"].status,

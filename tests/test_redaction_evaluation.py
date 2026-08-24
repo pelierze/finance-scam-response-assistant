@@ -1,0 +1,43 @@
+from pathlib import Path
+
+from src.redaction_evaluation import evaluate_redaction_cases, load_redaction_cases
+
+DATASET = Path(__file__).parents[1] / "data" / "redaction_evaluation_cases.json"
+
+
+def test_redaction_evaluation_dataset_is_complete_and_synthetic() -> None:
+    cases = load_redaction_cases(DATASET)
+
+    assert [case.id for case in cases] == [
+        f"REDACT-{number:03d}" for number in range(1, 71)
+    ]
+    assert {
+        data_type for case in cases for data_type in case.expected_redacted_types
+    } == {
+        "resident_id",
+        "phone",
+        "email",
+        "card",
+        "auth_code",
+        "password",
+        "account",
+    }
+    by_id = {case.id: case for case in cases}
+    assert by_id["REDACT-031"].input.startswith("제 주민번호 앞자리는")
+    assert by_id["REDACT-060"].input.startswith("2026-08-24 오전 11시 15분")
+    assert by_id["REDACT-061"].input.startswith("2026년 9월 7일")
+
+
+def test_redaction_evaluation_has_no_leaks_or_false_positives() -> None:
+    report = evaluate_redaction_cases(load_redaction_cases(DATASET))
+
+    assert report["case_pass_rate"] == 1
+    assert report["type_exact_accuracy"] == 1
+    assert report["redaction_count_accuracy"] == 1
+    assert report["required_placeholder_accuracy"] == 1
+    assert report["required_text_preservation_rate"] == 1
+    assert report["forbidden_type_incidence"] == 0
+    assert report["redaction_labels"] == 83
+    assert report["placeholder_labels"] == 78
+    assert report["preservation_labels"] == 82
+    assert report["failed_cases"] == []
