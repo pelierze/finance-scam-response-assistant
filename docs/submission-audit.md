@@ -6,7 +6,7 @@
 
 - 공개 URL: https://finance-scam-response-assistant-6mgmff5zupef2elhdfsgy9.streamlit.app/
 - 배포 브랜치: `main`
-- 검증 기준 소스 커밋: 감사 변경 커밋 생성 후 기록
+- 검증 기준 소스 커밋: `8a48c86` (`chore: audit submission readiness`)
 - 접근 검증: 시크릿 브라우저, 데스크톱, 모바일에서 공개 접근과 기본 흐름 확인
 
 ## 공식 출처와 연락처
