@@ -22,6 +22,10 @@ def test_redaction_evaluation_dataset_is_complete_and_synthetic() -> None:
         "password",
         "account",
     }
+    by_id = {case.id: case for case in cases}
+    assert by_id["REDACT-031"].input.startswith("제 주민번호 앞자리는")
+    assert by_id["REDACT-060"].input.startswith("2026-08-24 오전 11시 15분")
+    assert by_id["REDACT-061"].input.startswith("2026년 9월 7일")
 
 
 def test_redaction_evaluation_has_no_leaks_or_false_positives() -> None:
