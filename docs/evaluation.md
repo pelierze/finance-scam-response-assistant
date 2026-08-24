@@ -63,6 +63,12 @@ PYTHONPATH=. python scripts/evaluate_feedback_suite.py \
   --output artifacts/evaluation/llm-50.json
 ```
 
+LLM 평가는 `temperature=0`, 최대 2회 시도를 기본값으로 사용한다. 완전한 결정성이
+보장되는 것은 아니므로 결과 파일의 `metadata`에 실행 시각, 모델명, temperature,
+최대 시도 횟수, 시스템 프롬프트 해시, 구조화 스키마 해시, 사례 세트 해시,
+행동지침 라벨 해시와 OpenAI SDK 버전을 기록한다. 사례별 `redacted_input`에는 외부 API에
+전달된 로컬 마스킹 적용 문자열만 저장한다.
+
 로컬/LLM 사례별 비교:
 
 ```bash
@@ -78,6 +84,12 @@ PYTHONPATH=. python scripts/compare_feedback_evaluations.py \
 행동에 적용되는 공식 지침 중 실제 결과에서 누락된 비율이다. API fallback 사례는 통과로
 집계하지 않는다.
 
+대표 고위험 12건은 `data/guide_evaluation_labels.json`에 필수·금지 행동지침 ID를 독립
+라벨로 관리한다. 자동으로 조합한 지침을 다시 정답으로 사용하는 순환 평가를 피하기 위해
+이 12건에서는 명시 라벨만 사용하며, 필수 지침 누락률과 금지 지침 발생률을 함께 산출한다.
+실패 사례에는 `llm_extraction`, `schema_validation`, `rule_engine`, `question_engine`,
+`guide_composition`, `redaction`, `provider_or_fallback` 중 실패 단계를 기록한다.
+
 2026-08-21 로컬 규칙 추출기 결과:
 
 | 제출 지표 | 결과 | 평가 라벨 |
@@ -90,6 +102,10 @@ PYTHONPATH=. python scripts/compare_feedback_evaluations.py \
 | 금지 질문 발생률 | 0.00% | 117개 |
 | 민감정보 마스킹 성공률 | 100.00% | 2개 |
 | 고위험 필수 행동지침 누락률 | 0.00% | 61개 |
+
+명시 행동지침 라벨 적용 후 제출용 로컬 결과에서는 대표 12건의 필수 지침 33개가 모두
+출력됐고 금지 지침 48개의 발생 건수는 0개다. 기존 표의 61개는 자동 파생 라벨 기준 과거
+수치이며, 제출 자료에는 독립 라벨 기준 수치인 `33개/48개`를 사용한다.
 
 문맥 50건의 마스킹 라벨은 2개이며, 개인정보 보호 기능 자체는 일반 합성 데이터 70건과
 은행 계좌번호 문맥 데이터 63건으로 평가한다. 주민등록번호·전화번호·이메일·카드번호·
@@ -215,6 +231,8 @@ OPENAI_API_KEY=... PYTHONPATH=. python scripts/evaluate_natural_language.py --ex
 - [O] 7개 민감정보 유형의 합성 마스킹 평가 70건 확보
 - [O] 은행 계좌번호 문맥 평가 63건 및 전체 133건 통합 지표 산출
 - [O] 타입별 탐지율·누락률·과잉 마스킹률·복합 케이스 통과율 자동 산출
+- [O] 고위험 대표 12건 필수·금지 행동지침 독립 라벨 및 자동 평가
+- [O] LLM 평가 모델·프롬프트·스키마·데이터셋 해시와 실행 조건 기록
 - [ ] 평가 라벨 2인 교차 검토
 - [ ] 추가 질문 정답을 현재 질문 정책에 맞게 교차 검토
 - [ ] 실제 LLM 50건 평가 및 로컬 결과 비교 기록

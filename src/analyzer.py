@@ -74,13 +74,22 @@ class StructuredExtractor(Protocol):
 class OpenAIStructuredExtractor:
     """OpenAI Structured Outputs adapter; constructed only when a key exists."""
 
-    def __init__(self, *, api_key: str, model: str = "gpt-5.6-luna") -> None:
+    def __init__(
+        self,
+        *,
+        api_key: str,
+        model: str = "gpt-5.6-luna",
+        temperature: float = 0.0,
+    ) -> None:
         if not api_key:
             raise ValueError("OpenAI API key is required")
+        if not 0 <= temperature <= 2:
+            raise ValueError("Temperature must be between zero and two")
         from openai import OpenAI
 
         self._client = OpenAI(api_key=api_key)
         self._model = model
+        self._temperature = temperature
 
     def extract(self, text: str) -> dict[str, Any]:
         completion = self._client.chat.completions.parse(
@@ -90,6 +99,7 @@ class OpenAIStructuredExtractor:
                 {"role": "user", "content": text},
             ],
             response_format=LLMAnalysisSchema,
+            temperature=self._temperature,
         )
         parsed = completion.choices[0].message.parsed
         if parsed is None:
@@ -103,6 +113,7 @@ class AnalysisResult:
     redacted_types: tuple[str, ...]
     used_fallback: bool
     error_code: str | None = None
+    redacted_text: str | None = None
 
 
 def empty_analysis() -> StructuredAnalysis:
@@ -122,7 +133,7 @@ def analyze_text(
     text: str, extractor: StructuredExtractor, *, max_attempts: int = 2
 ) -> AnalysisResult:
     if not isinstance(text, str) or not text.strip():
-        return AnalysisResult(empty_analysis(), (), True, "invalid_input")
+        return AnalysisResult(empty_analysis(), (), True, "invalid_input", None)
     if max_attempts < 1 or max_attempts > 3:
         raise ValueError("max_attempts must be between one and three")
 
@@ -136,6 +147,7 @@ def analyze_text(
                 analysis=analysis,
                 redacted_types=redaction.detected_types,
                 used_fallback=False,
+                redacted_text=redaction.text,
             )
         except (TypeError, ValueError):
             last_error = "invalid_model_output"
@@ -147,4 +159,5 @@ def analyze_text(
         redacted_types=redaction.detected_types,
         used_fallback=True,
         error_code=last_error,
+        redacted_text=redaction.text,
     )

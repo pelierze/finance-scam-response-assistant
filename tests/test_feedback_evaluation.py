@@ -1,4 +1,8 @@
-from src.feedback_evaluation import FeedbackRun, score_feedback_runs
+from src.feedback_evaluation import (
+    FeedbackRun,
+    load_guide_expectations,
+    score_feedback_runs,
+)
 from src.response_service import load_guides
 
 
@@ -76,6 +80,53 @@ def test_fallback_is_never_counted_as_a_passing_case() -> None:
 
     assert metrics["case_pass_rate"] == 0
     assert metrics["fallback_cases"] == 1
+    assert metrics["failed_cases"][0]["stages"] == ["provider_or_fallback"]
     assert metrics["failed_cases"][0]["failures"] == [
         "fallback: provider_unavailable"
     ]
+
+
+def test_explicit_guide_labels_measure_required_and_forbidden_guides() -> None:
+    guides = load_guides("data/response_guides.json")
+    cases = [{"id": "CASE-X", "input": "돈을 보냈어요.", "expected_actions": {}}]
+    run = FeedbackRun(
+        case_id="CASE-X",
+        actions={},
+        active_dimensions=("financial_loss",),
+        level=5,
+        questions=(),
+        redacted_types=(),
+        guide_ids=("DEVICE_EXPOSURE_01",),
+        used_fallback=False,
+        error_code=None,
+    )
+    expectations = {
+        "CASE-X": {
+            "required": frozenset({"TRANSFER_01"}),
+            "forbidden": frozenset({"DEVICE_EXPOSURE_01"}),
+        }
+    }
+
+    metrics = score_feedback_runs(cases, [run], guides, expectations)
+
+    assert metrics["high_risk_required_guide_omission_rate"] == 1
+    assert metrics["forbidden_guide_incidence"] == 1
+    assert metrics["explicitly_labeled_guide_cases"] == 1
+    assert metrics["failed_cases"][0]["stages"] == ["guide_composition"]
+    assert metrics["failed_cases"][0]["failures"] == [
+        "missing guide: TRANSFER_01",
+        "forbidden guide: DEVICE_EXPOSURE_01",
+    ]
+
+
+def test_reviewed_guide_labels_are_valid() -> None:
+    guides = load_guides("data/response_guides.json")
+    case_ids = {f"CASE-{number:03d}" for number in range(1, 51)}
+
+    expectations = load_guide_expectations(
+        "data/guide_evaluation_labels.json",
+        case_ids=case_ids,
+        guide_ids={guide.action_id for guide in guides},
+    )
+
+    assert len(expectations) == 12

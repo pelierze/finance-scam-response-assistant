@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from src.analyzer import StructuredExtractor, analyze_text
-from src.models import ActionStatus
+from src.models import TRACKED_ACTIONS, ActionStatus
 from src.question_engine import select_questions
 from src.response_service import ResponseGuide, compose_guides
 from src.rule_engine import assess_exposure
@@ -23,6 +25,7 @@ class FeedbackRun:
     guide_ids: tuple[str, ...]
     used_fallback: bool
     error_code: str | None
+    redacted_input: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -35,6 +38,7 @@ class FeedbackRun:
             "guide_ids": list(self.guide_ids),
             "used_fallback": self.used_fallback,
             "error_code": self.error_code,
+            "redacted_input": self.redacted_input,
         }
 
 
@@ -42,10 +46,12 @@ def run_feedback_cases(
     cases: list[dict[str, Any]],
     extractor: StructuredExtractor,
     guides: tuple[ResponseGuide, ...],
+    *,
+    max_attempts: int = 2,
 ) -> list[FeedbackRun]:
     runs: list[FeedbackRun] = []
     for case in cases:
-        result = analyze_text(case["input"], extractor)
+        result = analyze_text(case["input"], extractor, max_attempts=max_attempts)
         assessment = assess_exposure(result.analysis)
         runs.append(
             FeedbackRun(
@@ -65,6 +71,7 @@ def run_feedback_cases(
                 ),
                 used_fallback=result.used_fallback,
                 error_code=result.error_code,
+                redacted_input=result.redacted_text,
             )
         )
     return runs
@@ -83,10 +90,37 @@ def _expected_guide_ids(
     }
 
 
+def load_guide_expectations(
+    path: str | Path,
+    *,
+    case_ids: set[str],
+    guide_ids: set[str],
+) -> dict[str, dict[str, frozenset[str]]]:
+    raw = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(raw, list) or not raw:
+        raise ValueError("Guide evaluation labels must be a non-empty list")
+    expectations: dict[str, dict[str, frozenset[str]]] = {}
+    for item in raw:
+        if set(item) != {"id", "required_guide_ids", "forbidden_guide_ids"}:
+            raise ValueError("Guide evaluation label fields do not match the schema")
+        case_id = item["id"]
+        if case_id not in case_ids or case_id in expectations:
+            raise ValueError(f"Unknown or duplicate guide case ID: {case_id}")
+        required = frozenset(item["required_guide_ids"])
+        forbidden = frozenset(item["forbidden_guide_ids"])
+        if required & forbidden:
+            raise ValueError(f"Guide labels overlap: {case_id}")
+        if (required | forbidden) - guide_ids:
+            raise ValueError(f"Unknown guide ID in labels: {case_id}")
+        expectations[case_id] = {"required": required, "forbidden": forbidden}
+    return expectations
+
+
 def score_feedback_runs(
     cases: list[dict[str, Any]],
     runs: list[FeedbackRun],
     guides: tuple[ResponseGuide, ...],
+    guide_expectations: dict[str, dict[str, frozenset[str]]] | None = None,
 ) -> dict[str, Any]:
     if [case["id"] for case in cases] != [run.case_id for run in runs]:
         raise ValueError("Cases and runs must have the same IDs in the same order")
@@ -98,6 +132,8 @@ def score_feedback_runs(
     forbidden_question_hits = forbidden_question_total = 0
     masking_correct = masking_total = 0
     required_guides_missing = required_guides_total = 0
+    forbidden_guide_hits = forbidden_guide_total = 0
+    explicitly_labeled_guide_cases = 0
     case_passes = 0
     failed_cases: list[dict[str, Any]] = []
 
@@ -163,19 +199,55 @@ def score_feedback_runs(
             if not matched:
                 failures.append(f"forbidden redaction: {redaction_type}")
 
-        if case.get("expected_level", 0) >= 3:
+        explicit_guides = (
+            guide_expectations.get(case["id"]) if guide_expectations else None
+        )
+        if explicit_guides is not None:
+            explicitly_labeled_guide_cases += 1
+            expected_guides = set(explicit_guides["required"])
+            forbidden_guides = set(explicit_guides["forbidden"])
+        elif guide_expectations is None and case.get("expected_level", 0) >= 3:
             expected_guides = _expected_guide_ids(case, guides)
+            forbidden_guides = set()
+        else:
+            expected_guides = set()
+            forbidden_guides = set()
+        if expected_guides or forbidden_guides:
             actual_guides = set(run.guide_ids)
             required_guides_total += len(expected_guides)
             missing_guides = expected_guides - actual_guides
             required_guides_missing += len(missing_guides)
             failures.extend(f"missing guide: {guide_id}" for guide_id in missing_guides)
+            forbidden_guide_total += len(forbidden_guides)
+            unexpected_guides = forbidden_guides & actual_guides
+            forbidden_guide_hits += len(unexpected_guides)
+            failures.extend(
+                f"forbidden guide: {guide_id}" for guide_id in unexpected_guides
+            )
 
         if run.used_fallback:
             failures.append(f"fallback: {run.error_code}")
         case_passes += int(not failures)
         if failures:
-            failed_cases.append({"id": case["id"], "failures": failures})
+            stages: set[str] = set()
+            for failure in failures:
+                if any(failure.startswith(f"{action}:") for action in TRACKED_ACTIONS):
+                    stages.add("llm_extraction")
+                elif "exposure" in failure or failure.startswith("level:"):
+                    stages.add("rule_engine")
+                elif "question" in failure:
+                    stages.add("question_engine")
+                elif "redaction" in failure:
+                    stages.add("redaction")
+                elif "guide" in failure:
+                    stages.add("guide_composition")
+                elif failure == "fallback: invalid_model_output":
+                    stages.add("schema_validation")
+                elif failure.startswith("fallback:"):
+                    stages.add("provider_or_fallback")
+            failed_cases.append(
+                {"id": case["id"], "stages": sorted(stages), "failures": failures}
+            )
 
     def ratio(numerator: int, denominator: int) -> float | None:
         return numerator / denominator if denominator else None
@@ -204,5 +276,10 @@ def score_feedback_runs(
             required_guides_missing, required_guides_total
         ),
         "high_risk_required_guide_labels": required_guides_total,
+        "forbidden_guide_incidence": ratio(
+            forbidden_guide_hits, forbidden_guide_total
+        ),
+        "forbidden_guide_labels": forbidden_guide_total,
+        "explicitly_labeled_guide_cases": explicitly_labeled_guide_cases,
         "failed_cases": failed_cases,
     }
