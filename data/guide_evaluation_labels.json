@@ -1,0 +1,62 @@
+[
+  {
+    "id": "CASE-003",
+    "required_guide_ids": ["CONTACT_STOP_01", "TRANSFER_01", "DEVICE_EXPOSURE_01", "AUTH_EXPOSURE_01", "PERSONAL_DATA_01", "EVIDENCE_01", "SMISHING_REPORT_01"],
+    "forbidden_guide_ids": []
+  },
+  {
+    "id": "CASE-004",
+    "required_guide_ids": ["DEVICE_EXPOSURE_01", "AUTH_EXPOSURE_01", "SMISHING_REPORT_01"],
+    "forbidden_guide_ids": ["CONTACT_STOP_01", "TRANSFER_01", "PERSONAL_DATA_01", "EVIDENCE_01"]
+  },
+  {
+    "id": "CASE-009",
+    "required_guide_ids": ["DEVICE_EXPOSURE_01", "AUTH_EXPOSURE_01"],
+    "forbidden_guide_ids": ["CONTACT_STOP_01", "TRANSFER_01", "PERSONAL_DATA_01", "EVIDENCE_01", "SMISHING_REPORT_01"]
+  },
+  {
+    "id": "CASE-010",
+    "required_guide_ids": ["TRANSFER_01", "DEVICE_EXPOSURE_01", "AUTH_EXPOSURE_01", "EVIDENCE_01"],
+    "forbidden_guide_ids": ["CONTACT_STOP_01", "PERSONAL_DATA_01", "SMISHING_REPORT_01"]
+  },
+  {
+    "id": "CASE-011",
+    "required_guide_ids": ["PERSONAL_DATA_01", "SMISHING_REPORT_01"],
+    "forbidden_guide_ids": ["TRANSFER_01", "DEVICE_EXPOSURE_01", "AUTH_EXPOSURE_01", "EVIDENCE_01"]
+  },
+  {
+    "id": "CASE-013",
+    "required_guide_ids": ["AUTH_EXPOSURE_01"],
+    "forbidden_guide_ids": ["CONTACT_STOP_01", "TRANSFER_01", "DEVICE_EXPOSURE_01", "PERSONAL_DATA_01", "EVIDENCE_01", "SMISHING_REPORT_01"]
+  },
+  {
+    "id": "CASE-015",
+    "required_guide_ids": ["AUTH_EXPOSURE_01", "PERSONAL_DATA_01"],
+    "forbidden_guide_ids": ["CONTACT_STOP_01", "TRANSFER_01", "DEVICE_EXPOSURE_01", "EVIDENCE_01", "SMISHING_REPORT_01"]
+  },
+  {
+    "id": "CASE-018",
+    "required_guide_ids": ["TRANSFER_01", "EVIDENCE_01"],
+    "forbidden_guide_ids": ["DEVICE_EXPOSURE_01", "AUTH_EXPOSURE_01", "PERSONAL_DATA_01", "SMISHING_REPORT_01"]
+  },
+  {
+    "id": "CASE-023",
+    "required_guide_ids": ["TRANSFER_01", "EVIDENCE_01"],
+    "forbidden_guide_ids": ["DEVICE_EXPOSURE_01", "AUTH_EXPOSURE_01", "PERSONAL_DATA_01", "SMISHING_REPORT_01"]
+  },
+  {
+    "id": "CASE-033",
+    "required_guide_ids": ["PERSONAL_DATA_01", "SMISHING_REPORT_01"],
+    "forbidden_guide_ids": ["CONTACT_STOP_01", "TRANSFER_01", "DEVICE_EXPOSURE_01", "AUTH_EXPOSURE_01", "EVIDENCE_01"]
+  },
+  {
+    "id": "CASE-038",
+    "required_guide_ids": ["DEVICE_EXPOSURE_01"],
+    "forbidden_guide_ids": ["CONTACT_STOP_01", "TRANSFER_01", "AUTH_EXPOSURE_01", "PERSONAL_DATA_01", "EVIDENCE_01", "SMISHING_REPORT_01"]
+  },
+  {
+    "id": "CASE-050",
+    "required_guide_ids": ["CONTACT_STOP_01", "DEVICE_EXPOSURE_01", "AUTH_EXPOSURE_01", "PERSONAL_DATA_01", "SMISHING_REPORT_01"],
+    "forbidden_guide_ids": ["TRANSFER_01", "EVIDENCE_01"]
+  }
+]
