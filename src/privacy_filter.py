@@ -40,7 +40,12 @@ _PATTERNS: tuple[tuple[str, str, re.Pattern[str]], ...] = (
     (
         "card",
         "[카드번호 마스킹]",
-        re.compile(r"(?<!\d)(?:\d{4}[- ]?){3}\d{4}(?!\d)"),
+        re.compile(
+            r"(?:(?P<label>카드번호|카드)"
+            r"(?P<separator>\s*(?:는|은|가|를|:)?\s*)"
+            r"(?P<value>\d{16})(?!\d))|"
+            r"(?P<formatted>(?<!\d)(?:\d{4}[- ]){3}\d{4}(?!\d))"
+        ),
     ),
     (
         "auth_code",
@@ -89,7 +94,16 @@ def redact_sensitive_text(text: str) -> RedactionResult:
     total_count = 0
 
     for data_type, placeholder, pattern in _PATTERNS:
-        if data_type in {"auth_code", "password", "account"}:
+        if data_type == "card":
+            redacted, count = pattern.subn(
+                lambda match, replacement=placeholder: (
+                    f"{match.group('label')}{match.group('separator')}{replacement}"
+                    if match.group("label")
+                    else replacement
+                ),
+                redacted,
+            )
+        elif data_type in {"auth_code", "password", "account"}:
             redacted, count = pattern.subn(
                 lambda match, replacement=placeholder: (
                     f"{match.group('label')}{match.group('separator')}{replacement}"

@@ -219,5 +219,239 @@
             "2026년 8월 24일",
             "150만원"
         ]
+    },
+    {
+        "id": "REDACT-016",
+        "input": "제 주민번호는 900101-1234567이고 오늘 1234567원을 보내라고 했습니다.",
+        "expected_redacted_types": [
+            "resident_id"
+        ],
+        "forbidden_redacted_types": [
+            "phone",
+            "card",
+            "account"
+        ],
+        "expected_redaction_count": 1,
+        "expected_unmasked_contains": [
+            "1234567원"
+        ]
+    },
+    {
+        "id": "REDACT-017",
+        "input": "주민번호를 900101 - 1234567 이렇게 적으라고 했어요.",
+        "expected_redacted_types": [
+            "resident_id"
+        ],
+        "forbidden_redacted_types": [
+            "phone",
+            "card",
+            "account"
+        ],
+        "expected_redaction_count": 1,
+        "expected_unmasked_contains": []
+    },
+    {
+        "id": "REDACT-018",
+        "input": "2026-08-24에 010-1234-5678로 연락이 왔습니다.",
+        "expected_redacted_types": [
+            "phone"
+        ],
+        "forbidden_redacted_types": [
+            "resident_id",
+            "account"
+        ],
+        "expected_redaction_count": 1,
+        "expected_unmasked_contains": [
+            "2026-08-24"
+        ]
+    },
+    {
+        "id": "REDACT-019",
+        "input": "상대방 번호가 010-9876-5432,였고 바로 다시 전화가 왔어요.",
+        "expected_redacted_types": [
+            "phone"
+        ],
+        "forbidden_redacted_types": [
+            "resident_id",
+            "account"
+        ],
+        "expected_redaction_count": 1,
+        "expected_unmasked_contains": []
+    },
+    {
+        "id": "REDACT-020",
+        "input": "test.finance+help2026@example.co.kr로 메일을 보내고 250만원을 입금하라고 했어요.",
+        "expected_redacted_types": [
+            "email"
+        ],
+        "forbidden_redacted_types": [
+            "phone",
+            "account"
+        ],
+        "expected_redaction_count": 1,
+        "expected_unmasked_contains": [
+            "250만원"
+        ]
+    },
+    {
+        "id": "REDACT-021",
+        "input": "카드번호는 1234-5678-9012-3456이고 주문번호는 2026082412345678입니다.",
+        "expected_redacted_types": [
+            "card"
+        ],
+        "forbidden_redacted_types": [
+            "phone",
+            "account"
+        ],
+        "expected_redaction_count": 1,
+        "expected_unmasked_contains": [
+            "주문번호는 2026082412345678"
+        ]
+    },
+    {
+        "id": "REDACT-022",
+        "input": "카드번호를 1234 5678-9012 3456이라고 적었습니다.",
+        "expected_redacted_types": [
+            "card"
+        ],
+        "forbidden_redacted_types": [
+            "phone",
+            "account"
+        ],
+        "expected_redaction_count": 1,
+        "expected_unmasked_contains": []
+    },
+    {
+        "id": "REDACT-023",
+        "input": "인증번호는 482913이고 피해 금액은 482913원입니다.",
+        "expected_redacted_types": [
+            "auth_code"
+        ],
+        "forbidden_redacted_types": [
+            "phone",
+            "account",
+            "card"
+        ],
+        "expected_redaction_count": 1,
+        "expected_unmasked_contains": [
+            "피해 금액은 482913원"
+        ]
+    },
+    {
+        "id": "REDACT-024",
+        "input": "오전 10시 32분에 인증번호 184205가 왔고 잠시 뒤 새 인증번호 771944가 다시 왔습니다.",
+        "expected_redacted_types": [
+            "auth_code"
+        ],
+        "forbidden_redacted_types": [
+            "phone",
+            "account",
+            "card"
+        ],
+        "expected_redaction_count": 2,
+        "expected_unmasked_contains": [
+            "오전 10시 32분"
+        ]
+    },
+    {
+        "id": "REDACT-025",
+        "input": "비밀번호가 Abc!2026#Safe 인데 이걸 상담원에게 알려달라고 했어요.",
+        "expected_redacted_types": [
+            "password"
+        ],
+        "forbidden_redacted_types": [
+            "email",
+            "auth_code"
+        ],
+        "expected_redaction_count": 1,
+        "expected_unmasked_contains": []
+    },
+    {
+        "id": "REDACT-026",
+        "input": "계좌번호는 123-456789-01-234이고 거래일자는 2026-08-24입니다.",
+        "expected_redacted_types": [
+            "account"
+        ],
+        "forbidden_redacted_types": [
+            "phone",
+            "card",
+            "resident_id"
+        ],
+        "expected_redaction_count": 1,
+        "expected_unmasked_contains": [
+            "2026-08-24"
+        ]
+    },
+    {
+        "id": "REDACT-027",
+        "input": "사건번호는 2026-123456이고 계좌번호는 123-456789-01-234, 피해금액은 300만원입니다.",
+        "expected_redacted_types": [
+            "account"
+        ],
+        "forbidden_redacted_types": [
+            "phone",
+            "card",
+            "resident_id"
+        ],
+        "expected_redaction_count": 1,
+        "expected_unmasked_contains": [
+            "사건번호는 2026-123456",
+            "300만원"
+        ]
+    },
+    {
+        "id": "REDACT-028",
+        "input": "제 전화번호는 010-1234-5678입니다. 상대방도 010-1234-5678을 다시 읽어줬고, 인증번호 482913을 말해달라고 했습니다.",
+        "expected_redacted_types": [
+            "phone",
+            "auth_code"
+        ],
+        "forbidden_redacted_types": [
+            "resident_id",
+            "account",
+            "card"
+        ],
+        "expected_redaction_count": 3,
+        "expected_unmasked_contains": []
+    },
+    {
+        "id": "REDACT-029",
+        "input": "2026년 8월 24일 오후 3시 15분에 연락이 왔습니다. 주문번호는 1234567890123456이고 제 전화번호는 010-5555-7777입니다. 150만원을 요구했습니다.",
+        "expected_redacted_types": [
+            "phone"
+        ],
+        "forbidden_redacted_types": [
+            "resident_id",
+            "card",
+            "account"
+        ],
+        "expected_redaction_count": 1,
+        "expected_unmasked_contains": [
+            "2026년 8월 24일",
+            "오후 3시 15분",
+            "주문번호는 1234567890123456",
+            "150만원"
+        ]
+    },
+    {
+        "id": "REDACT-030",
+        "input": "2026-08-24 오후 2시 30분쯤 연락을 받았습니다. 제 주민번호는 900101-1234567, 전화번호는 010-9876-5432, 이메일은 test.user+bank@example.com입니다. 상대방이 카드번호 1234-5678-9012-3456과 계좌번호 123-456789-01-234를 입력하라고 했고 인증번호 482913도 불러달라고 했습니다. 비밀번호는 Safe!Bank2026#이라고 말했습니다. 피해금액은 482913원이었고 사건번호는 2026-482913입니다.",
+        "expected_redacted_types": [
+            "resident_id",
+            "phone",
+            "email",
+            "card",
+            "account",
+            "auth_code",
+            "password"
+        ],
+        "forbidden_redacted_types": [],
+        "expected_redaction_count": 7,
+        "expected_unmasked_contains": [
+            "2026-08-24",
+            "오후 2시 30분",
+            "피해금액은 482913원",
+            "사건번호는 2026-482913"
+        ]
     }
 ]

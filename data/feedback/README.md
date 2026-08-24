@@ -14,7 +14,7 @@
 정답 행동·노출·추가 질문·마스킹 기대치를 기록했으며, 자동 회귀
 테스트가 이름 규칙에 맞는 모든 파일을 누적해 읽는다.
 동일 사례의 사용자 입력만 한 줄씩 복사해 수동 테스트할 수 있도록 `reviewed/context-test-inputs-001-050.txt`도 함께 관리한다. 새 사례 묶음을 검토할 때 해당 파일 끝에 같은 순서로 입력을 추가한다.
-민감정보 마스킹 합성 평가 15건의 수동 입력은 `reviewed/redaction-test-inputs.txt`에 별도로 관리한다.
+민감정보 마스킹 합성 평가 30건의 수동 입력은 `reviewed/redaction-test-inputs.txt`에 별도로 관리한다.
 기준 코드와 수정 코드의 상태·질문·노출 결과는 `scripts/compare_feedback_cases.py`로 비교하며,
 최신 결과는 `reviewed/comparison-cases-001-050.md`에 기록한다.
 
