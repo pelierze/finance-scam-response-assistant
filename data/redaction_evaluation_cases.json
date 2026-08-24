@@ -11,7 +11,10 @@
             "account"
         ],
         "expected_redaction_count": 1,
-        "expected_unmasked_contains": []
+        "expected_unmasked_contains": [],
+        "expected_masked_contains": [
+            "[주민등록번호 마스킹]"
+        ]
     },
     {
         "id": "REDACT-002",
@@ -25,7 +28,10 @@
             "account"
         ],
         "expected_redaction_count": 1,
-        "expected_unmasked_contains": []
+        "expected_unmasked_contains": [],
+        "expected_masked_contains": [
+            "[주민등록번호 마스킹]"
+        ]
     },
     {
         "id": "REDACT-003",
@@ -38,7 +44,10 @@
             "account"
         ],
         "expected_redaction_count": 1,
-        "expected_unmasked_contains": []
+        "expected_unmasked_contains": [],
+        "expected_masked_contains": [
+            "[전화번호 마스킹]"
+        ]
     },
     {
         "id": "REDACT-004",
@@ -51,7 +60,10 @@
             "account"
         ],
         "expected_redaction_count": 1,
-        "expected_unmasked_contains": []
+        "expected_unmasked_contains": [],
+        "expected_masked_contains": [
+            "[전화번호 마스킹]"
+        ]
     },
     {
         "id": "REDACT-005",
@@ -64,7 +76,10 @@
             "account"
         ],
         "expected_redaction_count": 1,
-        "expected_unmasked_contains": []
+        "expected_unmasked_contains": [],
+        "expected_masked_contains": [
+            "[이메일 마스킹]"
+        ]
     },
     {
         "id": "REDACT-006",
@@ -77,7 +92,10 @@
             "account"
         ],
         "expected_redaction_count": 1,
-        "expected_unmasked_contains": []
+        "expected_unmasked_contains": [],
+        "expected_masked_contains": [
+            "[카드번호 마스킹]"
+        ]
     },
     {
         "id": "REDACT-007",
@@ -90,7 +108,10 @@
             "account"
         ],
         "expected_redaction_count": 1,
-        "expected_unmasked_contains": []
+        "expected_unmasked_contains": [],
+        "expected_masked_contains": [
+            "[카드번호 마스킹]"
+        ]
     },
     {
         "id": "REDACT-008",
@@ -104,7 +125,10 @@
             "card"
         ],
         "expected_redaction_count": 1,
-        "expected_unmasked_contains": []
+        "expected_unmasked_contains": [],
+        "expected_masked_contains": [
+            "[인증정보 마스킹]"
+        ]
     },
     {
         "id": "REDACT-009",
@@ -117,7 +141,10 @@
             "auth_code"
         ],
         "expected_redaction_count": 1,
-        "expected_unmasked_contains": []
+        "expected_unmasked_contains": [],
+        "expected_masked_contains": [
+            "[비밀번호 마스킹]"
+        ]
     },
     {
         "id": "REDACT-010",
@@ -131,7 +158,10 @@
             "resident_id"
         ],
         "expected_redaction_count": 1,
-        "expected_unmasked_contains": []
+        "expected_unmasked_contains": [],
+        "expected_masked_contains": [
+            "[계좌번호 마스킹]"
+        ]
     },
     {
         "id": "REDACT-011",
@@ -144,7 +174,10 @@
             "card"
         ],
         "expected_redaction_count": 1,
-        "expected_unmasked_contains": []
+        "expected_unmasked_contains": [],
+        "expected_masked_contains": [
+            "[계좌번호 마스킹]"
+        ]
     },
     {
         "id": "REDACT-012",
@@ -159,6 +192,12 @@
         "expected_redaction_count": 4,
         "expected_unmasked_contains": [
             "제 이름은 홍길동"
+        ],
+        "expected_masked_contains": [
+            "[이메일 마스킹]",
+            "[전화번호 마스킹]",
+            "[주민등록번호 마스킹]",
+            "[카드번호 마스킹]"
         ]
     },
     {
@@ -179,7 +218,8 @@
             "2026년 8월 24일",
             "300만원",
             "50만원"
-        ]
+        ],
+        "expected_masked_contains": []
     },
     {
         "id": "REDACT-014",
@@ -198,7 +238,8 @@
             "오전 10시",
             "200만원",
             "3번"
-        ]
+        ],
+        "expected_masked_contains": []
     },
     {
         "id": "REDACT-015",
@@ -218,6 +259,13 @@
         "expected_unmasked_contains": [
             "2026년 8월 24일",
             "150만원"
+        ],
+        "expected_masked_contains": [
+            "[계좌번호 마스킹]",
+            "[이메일 마스킹]",
+            "[인증정보 마스킹]",
+            "[전화번호 마스킹]",
+            "[주민등록번호 마스킹]"
         ]
     },
     {
@@ -234,6 +282,9 @@
         "expected_redaction_count": 1,
         "expected_unmasked_contains": [
             "1234567원"
+        ],
+        "expected_masked_contains": [
+            "[주민등록번호 마스킹]"
         ]
     },
     {
@@ -248,7 +299,10 @@
             "account"
         ],
         "expected_redaction_count": 1,
-        "expected_unmasked_contains": []
+        "expected_unmasked_contains": [],
+        "expected_masked_contains": [
+            "[주민등록번호 마스킹]"
+        ]
     },
     {
         "id": "REDACT-018",
@@ -263,6 +317,9 @@
         "expected_redaction_count": 1,
         "expected_unmasked_contains": [
             "2026-08-24"
+        ],
+        "expected_masked_contains": [
+            "[전화번호 마스킹]"
         ]
     },
     {
@@ -276,7 +333,10 @@
             "account"
         ],
         "expected_redaction_count": 1,
-        "expected_unmasked_contains": []
+        "expected_unmasked_contains": [],
+        "expected_masked_contains": [
+            "[전화번호 마스킹]"
+        ]
     },
     {
         "id": "REDACT-020",
@@ -291,6 +351,9 @@
         "expected_redaction_count": 1,
         "expected_unmasked_contains": [
             "250만원"
+        ],
+        "expected_masked_contains": [
+            "[이메일 마스킹]"
         ]
     },
     {
@@ -306,6 +369,9 @@
         "expected_redaction_count": 1,
         "expected_unmasked_contains": [
             "주문번호는 2026082412345678"
+        ],
+        "expected_masked_contains": [
+            "[카드번호 마스킹]"
         ]
     },
     {
@@ -319,7 +385,10 @@
             "account"
         ],
         "expected_redaction_count": 1,
-        "expected_unmasked_contains": []
+        "expected_unmasked_contains": [],
+        "expected_masked_contains": [
+            "[카드번호 마스킹]"
+        ]
     },
     {
         "id": "REDACT-023",
@@ -335,6 +404,9 @@
         "expected_redaction_count": 1,
         "expected_unmasked_contains": [
             "피해 금액은 482913원"
+        ],
+        "expected_masked_contains": [
+            "[인증정보 마스킹]"
         ]
     },
     {
@@ -351,6 +423,9 @@
         "expected_redaction_count": 2,
         "expected_unmasked_contains": [
             "오전 10시 32분"
+        ],
+        "expected_masked_contains": [
+            "[인증정보 마스킹]"
         ]
     },
     {
@@ -364,7 +439,10 @@
             "auth_code"
         ],
         "expected_redaction_count": 1,
-        "expected_unmasked_contains": []
+        "expected_unmasked_contains": [],
+        "expected_masked_contains": [
+            "[비밀번호 마스킹]"
+        ]
     },
     {
         "id": "REDACT-026",
@@ -380,6 +458,9 @@
         "expected_redaction_count": 1,
         "expected_unmasked_contains": [
             "2026-08-24"
+        ],
+        "expected_masked_contains": [
+            "[계좌번호 마스킹]"
         ]
     },
     {
@@ -397,6 +478,9 @@
         "expected_unmasked_contains": [
             "사건번호는 2026-123456",
             "300만원"
+        ],
+        "expected_masked_contains": [
+            "[계좌번호 마스킹]"
         ]
     },
     {
@@ -412,7 +496,11 @@
             "card"
         ],
         "expected_redaction_count": 3,
-        "expected_unmasked_contains": []
+        "expected_unmasked_contains": [],
+        "expected_masked_contains": [
+            "[인증정보 마스킹]",
+            "[전화번호 마스킹]"
+        ]
     },
     {
         "id": "REDACT-029",
@@ -431,6 +519,9 @@
             "오후 3시 15분",
             "주문번호는 1234567890123456",
             "150만원"
+        ],
+        "expected_masked_contains": [
+            "[전화번호 마스킹]"
         ]
     },
     {
@@ -452,6 +543,230 @@
             "오후 2시 30분",
             "피해금액은 482913원",
             "사건번호는 2026-482913"
+        ],
+        "expected_masked_contains": [
+            "[계좌번호 마스킹]",
+            "[비밀번호 마스킹]",
+            "[이메일 마스킹]",
+            "[인증정보 마스킹]",
+            "[전화번호 마스킹]",
+            "[주민등록번호 마스킹]",
+            "[카드번호 마스킹]"
+        ]
+    },
+    {
+        "id": "REDACT-031",
+        "input": "2026년 9월 7일 오전 11시부터 오후 11시 59분까지 서비스를 확인했고 피해금액은 0원입니다.",
+        "expected_redacted_types": [],
+        "forbidden_redacted_types": [
+            "resident_id",
+            "phone",
+            "email",
+            "card",
+            "auth_code",
+            "password",
+            "account"
+        ],
+        "expected_redaction_count": 0,
+        "expected_unmasked_contains": [
+            "2026년 9월 7일",
+            "오전 11시",
+            "오후 11시 59분",
+            "0원"
+        ],
+        "expected_masked_contains": []
+    },
+    {
+        "id": "REDACT-032",
+        "input": "사건번호 2026-123456, 접수번호 20260824-001, 거래번호 202608241234를 기록했습니다.",
+        "expected_redacted_types": [],
+        "forbidden_redacted_types": [
+            "resident_id",
+            "phone",
+            "email",
+            "card",
+            "auth_code",
+            "password",
+            "account"
+        ],
+        "expected_redaction_count": 0,
+        "expected_unmasked_contains": [
+            "2026-123456",
+            "20260824-001",
+            "202608241234"
+        ],
+        "expected_masked_contains": []
+    },
+    {
+        "id": "REDACT-033",
+        "input": "긴급 신고는 112, 상담은 118 또는 1332, 금융회사 대표번호는 1588-1234로 확인했습니다.",
+        "expected_redacted_types": [],
+        "forbidden_redacted_types": [
+            "resident_id",
+            "phone",
+            "email",
+            "card",
+            "auth_code",
+            "password",
+            "account"
+        ],
+        "expected_redaction_count": 0,
+        "expected_unmasked_contains": [
+            "112",
+            "118",
+            "1332",
+            "1588-1234"
+        ],
+        "expected_masked_contains": []
+    },
+    {
+        "id": "REDACT-034",
+        "input": "우편번호는 06236이고 101동 1203호에서 연락을 받았습니다.",
+        "expected_redacted_types": [],
+        "forbidden_redacted_types": [
+            "resident_id",
+            "phone",
+            "email",
+            "card",
+            "auth_code",
+            "password",
+            "account"
+        ],
+        "expected_redaction_count": 0,
+        "expected_unmasked_contains": [
+            "06236",
+            "101동",
+            "1203호"
+        ],
+        "expected_masked_contains": []
+    },
+    {
+        "id": "REDACT-035",
+        "input": "금리는 연 3.5%이고 12개월 동안 24회 납부한다고 안내했습니다.",
+        "expected_redacted_types": [],
+        "forbidden_redacted_types": [
+            "resident_id",
+            "phone",
+            "email",
+            "card",
+            "auth_code",
+            "password",
+            "account"
+        ],
+        "expected_redaction_count": 0,
+        "expected_unmasked_contains": [
+            "3.5%",
+            "12개월",
+            "24회"
+        ],
+        "expected_masked_contains": []
+    },
+    {
+        "id": "REDACT-036",
+        "input": "주문번호 2026082412345678의 결제금액은 250,000원이고 주문일은 2026-08-24입니다.",
+        "expected_redacted_types": [],
+        "forbidden_redacted_types": [
+            "resident_id",
+            "phone",
+            "email",
+            "card",
+            "auth_code",
+            "password",
+            "account"
+        ],
+        "expected_redaction_count": 0,
+        "expected_unmasked_contains": [
+            "2026082412345678",
+            "250,000원",
+            "2026-08-24"
+        ],
+        "expected_masked_contains": []
+    },
+    {
+        "id": "REDACT-037",
+        "input": "택배 운송장 번호는 1234-5678-9012이고 배송 예정일은 8월 25일입니다.",
+        "expected_redacted_types": [],
+        "forbidden_redacted_types": [
+            "resident_id",
+            "phone",
+            "email",
+            "card",
+            "auth_code",
+            "password",
+            "account"
+        ],
+        "expected_redaction_count": 0,
+        "expected_unmasked_contains": [
+            "1234-5678-9012",
+            "8월 25일"
+        ],
+        "expected_masked_contains": []
+    },
+    {
+        "id": "REDACT-038",
+        "input": "계좌 잔액은 12,345,678원이고 확인된 피해액은 0원이며 현재 단계는 LEVEL 5가 아닙니다.",
+        "expected_redacted_types": [],
+        "forbidden_redacted_types": [
+            "resident_id",
+            "phone",
+            "email",
+            "card",
+            "auth_code",
+            "password",
+            "account"
+        ],
+        "expected_redaction_count": 0,
+        "expected_unmasked_contains": [
+            "12,345,678원",
+            "0원",
+            "LEVEL 5"
+        ],
+        "expected_masked_contains": []
+    },
+    {
+        "id": "REDACT-039",
+        "input": "인증번호는 6자리라고만 들었고 실제 번호는 받지 않았습니다. 통화 시각은 오후 4시 20분입니다.",
+        "expected_redacted_types": [],
+        "forbidden_redacted_types": [
+            "resident_id",
+            "phone",
+            "email",
+            "card",
+            "auth_code",
+            "password",
+            "account"
+        ],
+        "expected_redaction_count": 0,
+        "expected_unmasked_contains": [
+            "6자리",
+            "실제 번호는 받지 않았습니다",
+            "오후 4시 20분"
+        ],
+        "expected_masked_contains": []
+    },
+    {
+        "id": "REDACT-040",
+        "input": "2026-08-24 사건번호 2026-778899와 주문번호 2026082412345678을 기록했고 전화번호 010-2222-3333으로 연락받아 1,500,000원을 요구받았습니다.",
+        "expected_redacted_types": [
+            "phone"
+        ],
+        "forbidden_redacted_types": [
+            "resident_id",
+            "email",
+            "card",
+            "auth_code",
+            "password",
+            "account"
+        ],
+        "expected_redaction_count": 1,
+        "expected_unmasked_contains": [
+            "2026-08-24",
+            "2026-778899",
+            "2026082412345678",
+            "1,500,000원"
+        ],
+        "expected_masked_contains": [
+            "[전화번호 마스킹]"
         ]
     }
 ]

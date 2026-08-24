@@ -21,6 +21,7 @@ class RedactionCase:
     expected_redacted_types: frozenset[str]
     forbidden_redacted_types: frozenset[str]
     expected_redaction_count: int
+    expected_masked_contains: tuple[str, ...]
     expected_unmasked_contains: tuple[str, ...]
 
 
@@ -35,6 +36,7 @@ def load_redaction_cases(path: str | Path) -> tuple[RedactionCase, ...]:
         "expected_redacted_types",
         "forbidden_redacted_types",
         "expected_redaction_count",
+        "expected_masked_contains",
         "expected_unmasked_contains",
     }
     for item in raw:
@@ -50,6 +52,9 @@ def load_redaction_cases(path: str | Path) -> tuple[RedactionCase, ...]:
         if not isinstance(count, int) or count < 0:
             raise ValueError(f"Invalid redaction count: {item['id']}")
         preserved = tuple(item["expected_unmasked_contains"])
+        masked = tuple(item["expected_masked_contains"])
+        if any(not fragment for fragment in masked):
+            raise ValueError(f"Masked placeholder must not be empty: {item['id']}")
         if any(fragment not in item["input"] for fragment in preserved):
             raise ValueError(f"Preserved fragment is absent from input: {item['id']}")
         cases.append(
@@ -59,6 +64,7 @@ def load_redaction_cases(path: str | Path) -> tuple[RedactionCase, ...]:
                 expected_redacted_types=expected,
                 forbidden_redacted_types=forbidden,
                 expected_redaction_count=count,
+                expected_masked_contains=masked,
                 expected_unmasked_contains=preserved,
             )
         )
@@ -68,7 +74,8 @@ def load_redaction_cases(path: str | Path) -> tuple[RedactionCase, ...]:
 
 
 def evaluate_redaction_cases(cases: tuple[RedactionCase, ...]) -> dict[str, Any]:
-    type_matches = count_matches = preserved_matches = 0
+    type_matches = count_matches = masked_matches = preserved_matches = 0
+    masked_total = 0
     preserved_total = 0
     forbidden_hits = 0
     forbidden_total = 0
@@ -97,6 +104,12 @@ def evaluate_redaction_cases(cases: tuple[RedactionCase, ...]) -> dict[str, Any]
                 f"count: expected={case.expected_redaction_count}, "
                 f"actual={result.redaction_count}"
             )
+        for fragment in case.expected_masked_contains:
+            masked_total += 1
+            masked = fragment in result.text
+            masked_matches += int(masked)
+            if not masked:
+                case_failures.append(f"required placeholder is absent: {fragment}")
         for fragment in case.expected_unmasked_contains:
             preserved_total += 1
             preserved = fragment in result.text
@@ -113,6 +126,9 @@ def evaluate_redaction_cases(cases: tuple[RedactionCase, ...]) -> dict[str, Any]
         "case_pass_rate": passed / total,
         "type_exact_accuracy": type_matches / total,
         "redaction_count_accuracy": count_matches / total,
+        "required_placeholder_accuracy": (
+            masked_matches / masked_total if masked_total else None
+        ),
         "required_text_preservation_rate": (
             preserved_matches / preserved_total if preserved_total else None
         ),
@@ -120,6 +136,7 @@ def evaluate_redaction_cases(cases: tuple[RedactionCase, ...]) -> dict[str, Any]
             forbidden_hits / forbidden_total if forbidden_total else None
         ),
         "redaction_labels": sum(case.expected_redaction_count for case in cases),
+        "placeholder_labels": masked_total,
         "preservation_labels": preserved_total,
         "failed_cases": failures,
     }
