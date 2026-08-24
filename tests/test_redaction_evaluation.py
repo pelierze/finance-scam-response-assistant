@@ -9,7 +9,7 @@ def test_redaction_evaluation_dataset_is_complete_and_synthetic() -> None:
     cases = load_redaction_cases(DATASET)
 
     assert [case.id for case in cases] == [
-        f"REDACT-{number:03d}" for number in range(1, 41)
+        f"REDACT-{number:03d}" for number in range(1, 71)
     ]
     assert {
         data_type for case in cases for data_type in case.expected_redacted_types
@@ -33,7 +33,7 @@ def test_redaction_evaluation_has_no_leaks_or_false_positives() -> None:
     assert report["required_placeholder_accuracy"] == 1
     assert report["required_text_preservation_rate"] == 1
     assert report["forbidden_type_incidence"] == 0
-    assert report["redaction_labels"] == 45
-    assert report["placeholder_labels"] == 43
-    assert report["preservation_labels"] == 59
+    assert report["redaction_labels"] == 83
+    assert report["placeholder_labels"] == 78
+    assert report["preservation_labels"] == 82
     assert report["failed_cases"] == []

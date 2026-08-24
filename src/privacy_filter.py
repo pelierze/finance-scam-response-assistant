@@ -35,7 +35,13 @@ _PATTERNS: tuple[tuple[str, str, re.Pattern[str]], ...] = (
     (
         "phone",
         "[전화번호 마스킹]",
-        re.compile(r"(?<!\d)(?:01[016789])[- ]?\d{3,4}[- ]?\d{4}(?!\d)"),
+        re.compile(
+            r"(?<!\d)(?:"
+            r"01[016789]\d{7,8}|"
+            r"01[016789][- ]\d{3,4}[- ]\d{4}|"
+            r"\(01[016789]\)\s*\d{3,4}[- ]\d{4}"
+            r")(?!\d)"
+        ),
     ),
     (
         "card",
@@ -44,14 +50,15 @@ _PATTERNS: tuple[tuple[str, str, re.Pattern[str]], ...] = (
             r"(?:(?P<label>카드번호|카드)"
             r"(?P<separator>\s*(?:는|은|가|를|:)?\s*)"
             r"(?P<value>\d{16})(?!\d))|"
-            r"(?P<formatted>(?<!\d)(?:\d{4}[- ]){3}\d{4}(?!\d))"
+            r"(?P<formatted>(?<!주문번호 )(?<!주문번호는 )"
+            r"(?<!\d)(?:\d{4}[- ]){3}\d{4}(?!\d))"
         ),
     ),
     (
         "auth_code",
         "[인증정보 마스킹]",
         re.compile(
-            r"(?P<label>인증번호|인증코드|보안코드)"
+            r"(?P<label>인증번호|인증코드|보안코드|OTP\s*번호)"
             r"(?P<separator>\s*(?:는|은|가|:)?\s*)"
             r"(?P<value>[A-Za-z0-9!@#$%^&*]{4,20})",
             re.IGNORECASE,
@@ -61,9 +68,9 @@ _PATTERNS: tuple[tuple[str, str, re.Pattern[str]], ...] = (
         "password",
         "[비밀번호 마스킹]",
         re.compile(
-            r"(?P<label>비밀번호)"
-            r"(?P<separator>\s*(?:는|은|가|:)?\s*)"
-            r"(?P<value>[A-Za-z0-9!@#$%^&*]{4,20})",
+            r"(?P<label>비밀번호|비번)"
+            r"(?P<separator>\s*(?:는|은|가|이|:)?\s*)"
+            r"(?P<value>[A-Za-z0-9_!@#$%^&*]{4,20})",
             re.IGNORECASE,
         ),
     ),
@@ -71,9 +78,11 @@ _PATTERNS: tuple[tuple[str, str, re.Pattern[str]], ...] = (
         "account",
         "[계좌번호 마스킹]",
         re.compile(
-            r"(?P<label>계좌번호|계좌)"
+            r"(?:(?P<label>계좌번호|계좌)"
             r"(?P<separator>\s*(?:는|은|가|:)?\s*)"
-            r"(?P<value>\d(?:[- ]?\d){7,15})"
+            r"(?P<value>\d(?:[- ]?\d){7,15}))|"
+            r"(?:(?P<bank>[가-힣A-Za-z]+은행)(?P<bank_separator>\s+)"
+            r"(?P<bank_value>\d(?:[- ]?\d){7,15})(?=\s*계좌))"
         ),
     ),
 )
@@ -103,10 +112,39 @@ def redact_sensitive_text(text: str) -> RedactionResult:
                 ),
                 redacted,
             )
-        elif data_type in {"auth_code", "password", "account"}:
+        elif data_type in {"auth_code", "password"}:
+            repeated_values = (
+                [match.group("value") for match in pattern.finditer(redacted)]
+                if data_type == "auth_code"
+                else []
+            )
             redacted, count = pattern.subn(
                 lambda match, replacement=placeholder: (
                     f"{match.group('label')}{match.group('separator')}{replacement}"
+                ),
+                redacted,
+            )
+            if data_type == "auth_code":
+                for value in dict.fromkeys(repeated_values):
+                    repeated_pattern = re.compile(
+                        rf"(?P<label>(?:첫\s*번째|두\s*번째)도\s*){re.escape(value)}"
+                    )
+                    redacted, repeated_count = repeated_pattern.subn(
+                        lambda match, replacement=placeholder: (
+                            f"{match.group('label')}{replacement}"
+                        ),
+                        redacted,
+                    )
+                    count += repeated_count
+        elif data_type == "account":
+            redacted, count = pattern.subn(
+                lambda match, replacement=placeholder: (
+                    f"{match.group('label')}{match.group('separator')}{replacement}"
+                    if match.group("label")
+                    else (
+                        f"{match.group('bank')}{match.group('bank_separator')}"
+                        f"{replacement}"
+                    )
                 ),
                 redacted,
             )
