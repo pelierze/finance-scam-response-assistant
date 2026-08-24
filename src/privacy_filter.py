@@ -25,7 +25,11 @@ _PATTERNS: tuple[tuple[str, str, re.Pattern[str]], ...] = (
     (
         "email",
         "[이메일 마스킹]",
-        re.compile(r"(?<![\w.+-])[\w.+-]+@[\w-]+(?:\.[\w-]+)+(?![\w.-])"),
+        re.compile(
+            r"(?<![A-Za-z0-9_.+-])"
+            r"[A-Za-z0-9_.+-]+@[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+"
+            r"(?![A-Za-z0-9_.-])"
+        ),
     ),
     (
         "phone",

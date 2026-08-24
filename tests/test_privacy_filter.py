@@ -26,6 +26,15 @@ class PrivacyFilterTests(unittest.TestCase):
         self.assertEqual(result.text, "카드는 [카드번호 마스킹]입니다.")
         self.assertIn("card", result.detected_types)
 
+    def test_redacts_email_followed_by_korean_text(self) -> None:
+        result = redact_sensitive_text(
+            "메일은 test.user2026@example.com으로 보내고 safe.test@example.com입니다."
+        )
+
+        self.assertNotIn("test.user2026@example.com", result.text)
+        self.assertNotIn("safe.test@example.com", result.text)
+        self.assertEqual(result.detected_types, ("email",))
+
     def test_preserves_context_while_redacting_account_and_auth_code(self) -> None:
         result = redact_sensitive_text(
             "계좌번호는 123-456-789012이고 인증번호 839201을 알려줬어요."

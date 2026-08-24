@@ -4,7 +4,7 @@
 
 ## 배포 전
 
-- [O] `pytest --cov=src`와 `ruff check app.py src tests scripts` 통과 (69개, 전체 89%)
+- [O] `pytest --cov=src`와 `ruff check app.py src tests scripts` 통과 (70개, 전체 89%)
 - [ ] 공식 출처 URL·연락처·행동 문구 최신성 재확인
 - [ ] LLM 분석을 사용할 경우 `OPENAI_API_KEY`를 secret으로 설정
 - [ ] 저장소와 로그에 API 키·사용자 원문이 없는지 확인
