@@ -25,7 +25,9 @@ _PAST_MARKER = _compile(
 )
 _CURRENT_MARKER = _compile(r"오늘|방금|이번|현재|지금")
 _UNCERTAIN_MARKER = _compile(
-    r"잘\s*(?:기억이\s*)?안\s*나|기억나지\s*않|했는지(?:는)?\s*(?:잘\s*)?모르|헷갈"
+    r"잘\s*(?:기억이\s*)?안\s*나|기억나지\s*않|했는지(?:는)?\s*(?:잘\s*)?모르|"
+    r"(?:알려준|말한|보낸|입력한)\s*기억이\s*(?:없|나지\s*않)|"
+    r"(?:한|준|말한|보낸|입력한)\s*것\s*같기도.{0,30}아닌\s*것\s*같기도|헷갈"
 )
 _CORRECTION_MARKER = _compile(r"아니[,，]?\s*(?:생각해\s*보니|다시\s*보니)|정정")
 _NEGATION_MARKER = _compile(r"(?:^|\s)(?:안|못)\s*|않")
@@ -108,6 +110,11 @@ _REPORTED_LIE_CONTEXT = _compile(r"설치했다고\s*거짓말.{0,35}실제로�
 _ATTACKER_ACCOUNT_CLAIM = _compile(
     r"그\s*사람이\s*자기가\s*제\s*계좌를.{0,35}옮겨놨다고"
 )
+_PASSIVE_SENSITIVE_INFO_CONTEXT = _compile(
+    r"(?:문자|메시지|메세지).{0,80}(?:포함|적혀|적힌|쓰여|기재)|"
+    r"(?:포함|적혀|적힌|쓰여|기재).{0,80}(?:문자|메시지|메세지)|"
+    r"상대방.{0,50}(?:이미\s*)?(?:알고|가지고)\s*있"
+)
 _UNCERTAIN_APP_CONTEXT = _compile(r"앱은\s*깔았던\s*것\s*같기도.{0,30}(?:잘\s*)?모르")
 _OWN_ACCOUNT_TRANSFER = _compile(
     r"제\s*다른\s*계좌로.{0,60}이체했.{0,80}상대방\s*계좌로\s*보낸\s*건\s*(?:아니|아닙)"
@@ -124,6 +131,12 @@ _AUTH_DETAIL_PATTERNS = (
         _compile(r"(?:인증번호|문자로\s*온\s*(?:인증)?번호).{0,45}(?:읽어주|불러줬)"),
     ),
 )
+
+_PASSIVE_INFO_EVIDENCE = {
+    "personal_info_shared": "문자 메시지 또는 상대방 측에 사용자의 개인정보가 존재한다고 진술",
+    "financial_info_shared": "문자 메시지 또는 상대방 측에 사용자의 금융정보가 존재한다고 진술",
+    "auth_secret_shared": "문자 메시지 또는 상대방 측에 사용자의 인증정보가 존재한다고 진술",
+}
 
 
 ACTION_PATTERNS = {
@@ -382,6 +395,17 @@ def _observation(
         return {"status": ActionStatus.NOT_MENTIONED.value, "evidence": None}
     if patterns.concept.search(text) and _UNCERTAIN_MARKER.search(text):
         return {"status": ActionStatus.UNKNOWN.value, "evidence": None}
+    if (
+        action in _PASSIVE_INFO_EVIDENCE
+        and patterns.concept.search(text)
+        and _PASSIVE_SENSITIVE_INFO_CONTEXT.search(text)
+    ):
+        return {
+            "status": ActionStatus.NOT_MENTIONED.value,
+            "evidence": _PASSIVE_INFO_EVIDENCE[action],
+        }
+    if action in _PASSIVE_INFO_EVIDENCE and patterns.concept.search(text):
+        return {"status": ActionStatus.NOT_MENTIONED.value, "evidence": None}
     if patterns.concept.search(text):
         return {"status": ActionStatus.UNKNOWN.value, "evidence": None}
     return {"status": ActionStatus.NOT_MENTIONED.value, "evidence": None}
