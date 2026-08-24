@@ -8,7 +8,7 @@
     "source_title": "보이스피싱 피해를 입었다면?",
     "source_url": "https://www.fsc.go.kr/no040101?cnId=2107",
     "issuing_authority": "금융위원회",
-    "verified_at": "2026-08-14"
+    "verified_at": "2026-08-24"
   },
   {
     "action_id": "TRANSFER_01",
@@ -19,7 +19,7 @@
     "source_title": "보이스피싱 피해를 입었다면?",
     "source_url": "https://www.fsc.go.kr/no040101?cnId=2107",
     "issuing_authority": "금융위원회",
-    "verified_at": "2026-08-14"
+    "verified_at": "2026-08-24"
   },
   {
     "action_id": "DEVICE_EXPOSURE_01",
@@ -30,7 +30,7 @@
     "source_title": "피싱 주의 권고 및 악성 앱 삭제 방법",
     "source_url": "https://spam.kisa.or.kr/spam/na/ntt/selectNttInfo.do?bbsId=1001&mi=1019&nttSn=2701",
     "issuing_authority": "한국인터넷진흥원",
-    "verified_at": "2026-08-14"
+    "verified_at": "2026-08-24"
   },
   {
     "action_id": "AUTH_EXPOSURE_01",
@@ -41,7 +41,7 @@
     "source_title": "피싱 주의 권고 및 악성 앱 삭제 방법",
     "source_url": "https://spam.kisa.or.kr/spam/na/ntt/selectNttInfo.do?bbsId=1001&mi=1019&nttSn=2701",
     "issuing_authority": "한국인터넷진흥원",
-    "verified_at": "2026-08-14"
+    "verified_at": "2026-08-24"
   },
   {
     "action_id": "PERSONAL_DATA_01",
@@ -52,7 +52,7 @@
     "source_title": "개인정보가 노출된 것 같다면 이렇게!",
     "source_url": "https://www.fsc.go.kr/no040104?cnId=1527",
     "issuing_authority": "금융위원회",
-    "verified_at": "2026-08-14"
+    "verified_at": "2026-08-24"
   },
   {
     "action_id": "EVIDENCE_01",
@@ -63,7 +63,7 @@
     "source_title": "사이버범죄 신고시스템 신고 안내",
     "source_url": "https://ecrm.police.go.kr/minwon/main",
     "issuing_authority": "경찰청",
-    "verified_at": "2026-08-14"
+    "verified_at": "2026-08-24"
   },
   {
     "action_id": "SMISHING_REPORT_01",
@@ -74,6 +74,6 @@
     "source_title": "스미싱·큐싱 공격 대응",
     "source_url": "https://www.kisa.or.kr/1020601",
     "issuing_authority": "한국인터넷진흥원",
-    "verified_at": "2026-08-14"
+    "verified_at": "2026-08-24"
   }
 ]
