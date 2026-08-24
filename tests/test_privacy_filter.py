@@ -25,6 +25,28 @@ class PrivacyFilterTests(unittest.TestCase):
                 self.assertEqual(result.redaction_count, 1)
                 self.assertIn("[계좌번호 마스킹]", result.text)
 
+    def test_account_detection_does_not_depend_on_known_bank_or_format(self) -> None:
+        originals = (
+            "미래은행 12-3456-7890 계좌로 보내라고 했습니다.",
+            "새빛뱅크 12345 67890으로 입금하라고 했습니다.",
+            "계좌번호는 123 4567 8901234입니다.",
+        )
+
+        for original in originals:
+            with self.subTest(original=original):
+                result = redact_sensitive_text(original)
+
+                self.assertEqual(result.detected_types, ("account",))
+                self.assertEqual(result.redaction_count, 1)
+
+    def test_bank_context_does_not_turn_phone_into_account(self) -> None:
+        result = redact_sensitive_text(
+            "미래은행 010-1234-5678로 연락했고 300만원을 요구했습니다."
+        )
+
+        self.assertEqual(result.detected_types, ("phone",))
+        self.assertIn("300만원", result.text)
+
     def test_redacts_multiple_sensitive_values(self) -> None:
         original = (
             "주민번호 900101-1234567, 전화 010-1234-5678, "
