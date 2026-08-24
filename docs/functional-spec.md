@@ -62,11 +62,22 @@
 - 전체 `src` 테스트 커버리지는 89%, 로컬 자연어 추출기 커버리지는 100%다.
 - 실제 LLM 자연어 판정 성능은 API 연결 후 별도 평가 세트로 측정해야 한다.
 
+### 제출 기준 평가 스냅샷
+
+- 기존 범주형 자연어 평가 45건은 초기 취약 유형 확인용 baseline이다.
+- 피드백 반영 후 별도로 구축한 제출용 문맥 회귀 50건은 로컬 분석기에서 50/50 통과했다.
+- 합성 마스킹 70건과 은행 계좌번호 문맥 63건을 합친 통합 마스킹 133건은 133/133 통과했다.
+- 행동지침 독립 라벨은 필수 33개 누락 0건, 금지 48개 발생 0건이다.
+- 초기 45건과 제출용 50건은 데이터셋과 라벨 범위가 다르므로 직접 향상률로 표현하지 않는다.
+- 실제 LLM 50건 평가는 실행하지 않았으며 로컬 지표와 섞어 쓰지 않는다.
+
 ## 실행 및 검증
 
 ```bash
 pip install -r requirements.txt -r requirements-dev.txt
-pytest --cov=src
-ruff check app.py src tests
+PYTHONPATH=. pytest --cov=src
+ruff check app.py src tests scripts
+PYTHONPATH=. python scripts/evaluate_feedback_suite.py --extractor local --summary-only
+PYTHONPATH=. python scripts/evaluate_redaction_suite.py
 streamlit run app.py
 ```
