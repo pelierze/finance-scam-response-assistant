@@ -16,14 +16,15 @@ INJECTION_WITH_RESIDENT_ID = (
 )
 
 
-def test_sensitive_input_stays_unconfirmed_until_user_answers() -> None:
+def test_sensitive_value_without_sharing_action_is_not_mentioned() -> None:
     result = analyze_text(INJECTION_WITH_RESIDENT_ID, LocalKoreanRuleExtractor())
 
     assert result.redacted_types == ("resident_id",)
-    assert result.analysis.actions["personal_info_shared"].status is ActionStatus.UNKNOWN
-    assert [question.action for question in select_questions(result.analysis)] == [
-        "personal_info_shared"
-    ]
+    assert (
+        result.analysis.actions["personal_info_shared"].status
+        is ActionStatus.NOT_MENTIONED
+    )
+    assert select_questions(result.analysis) == ()
 
 
 @pytest.mark.parametrize(

@@ -87,3 +87,29 @@ def test_explicit_correction_overrides_previous_financial_information_denial() -
 
     assert analysis.actions["financial_info_shared"].status is ActionStatus.DONE
     assert select_questions(analysis) == ()
+
+
+def test_sensitive_information_in_received_message_is_not_user_sharing() -> None:
+    analysis = analyze(
+        "제 계좌와 전화번호가 포함된 개인정보가 적힌 문자 메세지를 받았어요"
+    )
+
+    assert (
+        analysis.actions["suspicious_contact_received"].status
+        is ActionStatus.DONE
+    )
+    assert (
+        analysis.actions["personal_info_shared"].status
+        is ActionStatus.NOT_MENTIONED
+    )
+    assert (
+        analysis.actions["financial_info_shared"].status
+        is ActionStatus.NOT_MENTIONED
+    )
+    assert analysis.actions["personal_info_shared"].evidence
+    assert analysis.actions["financial_info_shared"].evidence
+
+    assessment = assess_exposure(analysis)
+    assert assessment.active_dimensions == frozenset({"contact"})
+    assert int(assessment.representative_level) == 1
+    assert select_questions(analysis) == ()
