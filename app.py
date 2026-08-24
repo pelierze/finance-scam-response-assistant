@@ -45,7 +45,8 @@ REDACTION_LABELS = {
     "phone": "전화번호",
     "email": "이메일 주소",
     "card": "카드번호",
-    "auth_secret": "인증정보",
+    "auth_code": "인증번호",
+    "password": "비밀번호",
     "account": "계좌번호",
 }
 CLARIFICATION_LABELS = {

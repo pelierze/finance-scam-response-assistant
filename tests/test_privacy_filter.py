@@ -44,7 +44,17 @@ class PrivacyFilterTests(unittest.TestCase):
         self.assertIn("인증번호 [인증정보 마스킹]", result.text)
         self.assertNotIn("123-456-789012", result.text)
         self.assertNotIn("839201", result.text)
-        self.assertEqual(set(result.detected_types), {"account", "auth_secret"})
+        self.assertEqual(set(result.detected_types), {"account", "auth_code"})
+
+    def test_distinguishes_password_from_auth_code(self) -> None:
+        result = redact_sensitive_text(
+            "비밀번호는 SafeBank!2026이고 인증번호는 482913입니다."
+        )
+
+        self.assertEqual(set(result.detected_types), {"password", "auth_code"})
+        self.assertEqual(result.redaction_count, 2)
+        self.assertNotIn("SafeBank!2026", result.text)
+        self.assertNotIn("482913", result.text)
 
     def test_does_not_mask_unrelated_amount(self) -> None:
         result = redact_sensitive_text("안전계좌로 10000000원을 송금했습니다.")

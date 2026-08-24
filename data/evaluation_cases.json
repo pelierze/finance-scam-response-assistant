@@ -407,7 +407,7 @@
     "expected_dimensions": ["financial_data", "authentication"],
     "expected_level": 4,
     "expected_questions": ["money_transferred"],
-    "expected_redacted_types": ["card", "auth_secret"]
+    "expected_redacted_types": ["card", "auth_code"]
   },
   {
     "id": "sensitive_03",

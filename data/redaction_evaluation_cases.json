@@ -1,206 +1,223 @@
 [
     {
-        "id": "REDACTION-001",
-        "text": "제 주민등록번호는 900101-1234567입니다.",
-        "expected_types": [
+        "id": "REDACT-001",
+        "input": "제 주민등록번호는 900101-1234567입니다.",
+        "expected_redacted_types": [
             "resident_id"
         ],
-        "sensitive_fragments": [
-            "900101-1234567"
+        "forbidden_redacted_types": [
+            "phone",
+            "card",
+            "account"
         ],
-        "expected_placeholders": [
-            "[주민등록번호 마스킹]"
-        ]
+        "expected_redaction_count": 1,
+        "expected_unmasked_contains": []
     },
     {
-        "id": "REDACTION-002",
-        "text": "상대방에게 주민번호 9001011234567을 입력하라고 안내받았습니다.",
-        "expected_types": [
+        "id": "REDACT-002",
+        "input": "상대방에게 주민번호 9001011234567을 입력하라고 안내받았습니다.",
+        "expected_redacted_types": [
             "resident_id"
         ],
-        "sensitive_fragments": [
-            "9001011234567"
+        "forbidden_redacted_types": [
+            "phone",
+            "card",
+            "account"
         ],
-        "expected_placeholders": [
-            "[주민등록번호 마스킹]"
-        ]
+        "expected_redaction_count": 1,
+        "expected_unmasked_contains": []
     },
     {
-        "id": "REDACTION-003",
-        "text": "연락 가능한 번호는 010-9876-5432입니다.",
-        "expected_types": [
+        "id": "REDACT-003",
+        "input": "연락 가능한 번호는 010-9876-5432입니다.",
+        "expected_redacted_types": [
             "phone"
         ],
-        "sensitive_fragments": [
-            "010-9876-5432"
+        "forbidden_redacted_types": [
+            "resident_id",
+            "account"
         ],
-        "expected_placeholders": [
-            "[전화번호 마스킹]"
-        ]
+        "expected_redaction_count": 1,
+        "expected_unmasked_contains": []
     },
     {
-        "id": "REDACTION-004",
-        "text": "제 번호 01098765432로 다시 전화한다고 했어요.",
-        "expected_types": [
+        "id": "REDACT-004",
+        "input": "제 번호 01098765432로 다시 전화한다고 했어요.",
+        "expected_redacted_types": [
             "phone"
         ],
-        "sensitive_fragments": [
-            "01098765432"
+        "forbidden_redacted_types": [
+            "resident_id",
+            "account"
         ],
-        "expected_placeholders": [
-            "[전화번호 마스킹]"
-        ]
+        "expected_redaction_count": 1,
+        "expected_unmasked_contains": []
     },
     {
-        "id": "REDACTION-005",
-        "text": "확인 메일을 test.user2026@example.com으로 보내준다고 했습니다.",
-        "expected_types": [
+        "id": "REDACT-005",
+        "input": "확인 메일을 test.user2026@example.com으로 보내준다고 했습니다.",
+        "expected_redacted_types": [
             "email"
         ],
-        "sensitive_fragments": [
-            "test.user2026@example.com"
-        ],
-        "expected_placeholders": [
-            "[이메일 마스킹]"
-        ]
-    },
-    {
-        "id": "REDACTION-006",
-        "text": "카드번호가 1234-5678-9012-3456인데 이 번호를 입력하라고 했어요.",
-        "expected_types": [
-            "card"
-        ],
-        "sensitive_fragments": [
-            "1234-5678-9012-3456"
-        ],
-        "expected_placeholders": [
-            "[카드번호 마스킹]"
-        ]
-    },
-    {
-        "id": "REDACTION-007",
-        "text": "카드 앞면에 적힌 번호는 1234 5678 9012 3456입니다.",
-        "expected_types": [
-            "card"
-        ],
-        "sensitive_fragments": [
-            "1234 5678 9012 3456"
-        ],
-        "expected_placeholders": [
-            "[카드번호 마스킹]"
-        ]
-    },
-    {
-        "id": "REDACTION-008",
-        "text": "문자로 인증번호 482913이 왔고 상대방이 그 번호를 불러달라고 했어요.",
-        "expected_types": [
-            "auth_secret"
-        ],
-        "sensitive_fragments": [
-            "482913"
-        ],
-        "expected_placeholders": [
-            "[인증정보 마스킹]"
-        ]
-    },
-    {
-        "id": "REDACTION-009",
-        "text": "제가 사용하던 비밀번호는 SafeBank!2026인데 상대방이 알려달라고 했습니다.",
-        "expected_types": [
-            "auth_secret"
-        ],
-        "sensitive_fragments": [
-            "SafeBank!2026"
-        ],
-        "expected_placeholders": [
-            "[인증정보 마스킹]"
-        ]
-    },
-    {
-        "id": "REDACTION-010",
-        "text": "제 계좌번호는 123-456789-01-234입니다.",
-        "expected_types": [
+        "forbidden_redacted_types": [
+            "phone",
             "account"
         ],
-        "sensitive_fragments": [
-            "123-456789-01-234"
-        ],
-        "expected_placeholders": [
-            "[계좌번호 마스킹]"
-        ]
+        "expected_redaction_count": 1,
+        "expected_unmasked_contains": []
     },
     {
-        "id": "REDACTION-011",
-        "text": "국민은행 계좌 123456-78-901234로 돈을 받으라고 했습니다.",
-        "expected_types": [
+        "id": "REDACT-006",
+        "input": "카드번호가 1234-5678-9012-3456인데 이 번호를 입력하라고 했어요.",
+        "expected_redacted_types": [
+            "card"
+        ],
+        "forbidden_redacted_types": [
+            "phone",
             "account"
         ],
-        "sensitive_fragments": [
-            "123456-78-901234"
-        ],
-        "expected_placeholders": [
-            "[계좌번호 마스킹]"
-        ]
+        "expected_redaction_count": 1,
+        "expected_unmasked_contains": []
     },
     {
-        "id": "REDACTION-012",
-        "text": "제 이름은 홍길동이고 주민번호는 900101-1234567, 전화번호는 010-9876-5432, 이메일은 test.user2026@example.com입니다. 카드번호는 1234-5678-9012-3456입니다.",
-        "expected_types": [
+        "id": "REDACT-007",
+        "input": "카드 앞면에 적힌 번호는 1234 5678 9012 3456입니다.",
+        "expected_redacted_types": [
+            "card"
+        ],
+        "forbidden_redacted_types": [
+            "phone",
+            "account"
+        ],
+        "expected_redaction_count": 1,
+        "expected_unmasked_contains": []
+    },
+    {
+        "id": "REDACT-008",
+        "input": "문자로 인증번호 482913이 왔고 상대방이 그 번호를 불러달라고 했어요.",
+        "expected_redacted_types": [
+            "auth_code"
+        ],
+        "forbidden_redacted_types": [
+            "phone",
+            "account",
+            "card"
+        ],
+        "expected_redaction_count": 1,
+        "expected_unmasked_contains": []
+    },
+    {
+        "id": "REDACT-009",
+        "input": "제가 사용하던 비밀번호는 SafeBank!2026인데 상대방이 알려달라고 했습니다.",
+        "expected_redacted_types": [
+            "password"
+        ],
+        "forbidden_redacted_types": [
+            "email",
+            "auth_code"
+        ],
+        "expected_redaction_count": 1,
+        "expected_unmasked_contains": []
+    },
+    {
+        "id": "REDACT-010",
+        "input": "제 계좌번호는 123-456789-01-234입니다.",
+        "expected_redacted_types": [
+            "account"
+        ],
+        "forbidden_redacted_types": [
+            "phone",
+            "card",
+            "resident_id"
+        ],
+        "expected_redaction_count": 1,
+        "expected_unmasked_contains": []
+    },
+    {
+        "id": "REDACT-011",
+        "input": "국민은행 계좌 123456-78-901234로 돈을 받으라고 했습니다.",
+        "expected_redacted_types": [
+            "account"
+        ],
+        "forbidden_redacted_types": [
+            "phone",
+            "card"
+        ],
+        "expected_redaction_count": 1,
+        "expected_unmasked_contains": []
+    },
+    {
+        "id": "REDACT-012",
+        "input": "제 이름은 홍길동이고 주민번호는 900101-1234567, 전화번호는 010-9876-5432, 이메일은 test.user2026@example.com입니다. 카드번호는 1234-5678-9012-3456입니다.",
+        "expected_redacted_types": [
             "resident_id",
             "phone",
             "email",
             "card"
         ],
-        "sensitive_fragments": [
-            "900101-1234567",
-            "010-9876-5432",
-            "test.user2026@example.com",
-            "1234-5678-9012-3456"
-        ],
-        "expected_placeholders": [
-            "[주민등록번호 마스킹]",
-            "[전화번호 마스킹]",
-            "[이메일 마스킹]",
-            "[카드번호 마스킹]"
+        "forbidden_redacted_types": [],
+        "expected_redaction_count": 4,
+        "expected_unmasked_contains": [
+            "제 이름은 홍길동"
         ]
     },
     {
-        "id": "REDACTION-013",
-        "text": "2026년 8월 24일에 300만원을 보냈고 다음 날 50만원을 추가로 보냈습니다.",
-        "expected_types": [],
-        "sensitive_fragments": [],
-        "expected_placeholders": []
-    },
-    {
-        "id": "REDACTION-014",
-        "text": "8월 20일 오전 10시쯤 연락을 받았고 200만원을 요구했습니다. 저는 3번 정도 거절했고 돈은 보내지 않았습니다.",
-        "expected_types": [],
-        "sensitive_fragments": [],
-        "expected_placeholders": []
-    },
-    {
-        "id": "REDACTION-015",
-        "text": "2026년 8월 24일에 연락을 받았습니다. 제 번호는 010-1234-5678이고 이메일은 safe.test@example.com입니다. 주민번호 900101-1234567과 계좌번호 123-456789-01-234를 입력하라고 했고 인증번호 482913도 물어봤습니다. 상대방은 150만원을 보내라고 했습니다.",
-        "expected_types": [
+        "id": "REDACT-013",
+        "input": "2026년 8월 24일에 300만원을 보냈고 다음 날 50만원을 추가로 보냈습니다.",
+        "expected_redacted_types": [],
+        "forbidden_redacted_types": [
             "resident_id",
             "phone",
             "email",
-            "auth_secret",
+            "card",
+            "auth_code",
+            "password",
             "account"
         ],
-        "sensitive_fragments": [
-            "010-1234-5678",
-            "safe.test@example.com",
-            "900101-1234567",
-            "123-456789-01-234",
-            "482913"
+        "expected_redaction_count": 0,
+        "expected_unmasked_contains": [
+            "2026년 8월 24일",
+            "300만원",
+            "50만원"
+        ]
+    },
+    {
+        "id": "REDACT-014",
+        "input": "8월 20일 오전 10시쯤 연락을 받았고 200만원을 요구했습니다. 저는 3번 정도 거절했고 돈은 보내지 않았습니다.",
+        "expected_redacted_types": [],
+        "forbidden_redacted_types": [
+            "resident_id",
+            "phone",
+            "card",
+            "auth_code",
+            "account"
         ],
-        "expected_placeholders": [
-            "[주민등록번호 마스킹]",
-            "[전화번호 마스킹]",
-            "[이메일 마스킹]",
-            "[인증정보 마스킹]",
-            "[계좌번호 마스킹]"
+        "expected_redaction_count": 0,
+        "expected_unmasked_contains": [
+            "8월 20일",
+            "오전 10시",
+            "200만원",
+            "3번"
+        ]
+    },
+    {
+        "id": "REDACT-015",
+        "input": "2026년 8월 24일에 연락을 받았습니다. 제 번호는 010-1234-5678이고 이메일은 safe.test@example.com입니다. 주민번호 900101-1234567과 계좌번호 123-456789-01-234를 입력하라고 했고 인증번호 482913도 물어봤습니다. 상대방은 150만원을 보내라고 했습니다.",
+        "expected_redacted_types": [
+            "phone",
+            "email",
+            "resident_id",
+            "account",
+            "auth_code"
+        ],
+        "forbidden_redacted_types": [
+            "card",
+            "password"
+        ],
+        "expected_redaction_count": 5,
+        "expected_unmasked_contains": [
+            "2026년 8월 24일",
+            "150만원"
         ]
     }
 ]

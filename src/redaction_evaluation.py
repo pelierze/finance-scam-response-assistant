@@ -10,17 +10,18 @@ from typing import Any
 from src.privacy_filter import redact_sensitive_text
 
 SUPPORTED_TYPES = frozenset(
-    {"resident_id", "phone", "email", "card", "auth_secret", "account"}
+    {"resident_id", "phone", "email", "card", "auth_code", "password", "account"}
 )
 
 
 @dataclass(frozen=True)
 class RedactionCase:
     id: str
-    text: str
-    expected_types: frozenset[str]
-    sensitive_fragments: tuple[str, ...]
-    expected_placeholders: tuple[str, ...]
+    input: str
+    expected_redacted_types: frozenset[str]
+    forbidden_redacted_types: frozenset[str]
+    expected_redaction_count: int
+    expected_unmasked_contains: tuple[str, ...]
 
 
 def load_redaction_cases(path: str | Path) -> tuple[RedactionCase, ...]:
@@ -28,27 +29,37 @@ def load_redaction_cases(path: str | Path) -> tuple[RedactionCase, ...]:
     if not isinstance(raw, list) or not raw:
         raise ValueError("Redaction evaluation dataset must be a non-empty list")
     cases: list[RedactionCase] = []
+    required = {
+        "id",
+        "input",
+        "expected_redacted_types",
+        "forbidden_redacted_types",
+        "expected_redaction_count",
+        "expected_unmasked_contains",
+    }
     for item in raw:
-        if set(item) != {
-            "id",
-            "text",
-            "expected_types",
-            "sensitive_fragments",
-            "expected_placeholders",
-        }:
+        if set(item) != required:
             raise ValueError("Redaction case fields do not match the schema")
-        expected_types = frozenset(item["expected_types"])
-        if expected_types - SUPPORTED_TYPES:
+        expected = frozenset(item["expected_redacted_types"])
+        forbidden = frozenset(item["forbidden_redacted_types"])
+        if (expected | forbidden) - SUPPORTED_TYPES:
             raise ValueError(f"Unsupported redaction type: {item['id']}")
-        if any(fragment not in item["text"] for fragment in item["sensitive_fragments"]):
-            raise ValueError(f"Sensitive fragment is absent from input: {item['id']}")
+        if expected & forbidden:
+            raise ValueError(f"Expected and forbidden types overlap: {item['id']}")
+        count = item["expected_redaction_count"]
+        if not isinstance(count, int) or count < 0:
+            raise ValueError(f"Invalid redaction count: {item['id']}")
+        preserved = tuple(item["expected_unmasked_contains"])
+        if any(fragment not in item["input"] for fragment in preserved):
+            raise ValueError(f"Preserved fragment is absent from input: {item['id']}")
         cases.append(
             RedactionCase(
                 id=item["id"],
-                text=item["text"],
-                expected_types=expected_types,
-                sensitive_fragments=tuple(item["sensitive_fragments"]),
-                expected_placeholders=tuple(item["expected_placeholders"]),
+                input=item["input"],
+                expected_redacted_types=expected,
+                forbidden_redacted_types=forbidden,
+                expected_redaction_count=count,
+                expected_unmasked_contains=preserved,
             )
         )
     if len({case.id for case in cases}) != len(cases):
@@ -57,62 +68,58 @@ def load_redaction_cases(path: str | Path) -> tuple[RedactionCase, ...]:
 
 
 def evaluate_redaction_cases(cases: tuple[RedactionCase, ...]) -> dict[str, Any]:
-    exact_type_matches = 0
-    positive_fragments = leaked_fragments = 0
-    expected_placeholders = missing_placeholders = 0
-    negative_cases = false_positive_cases = 0
+    type_matches = count_matches = preserved_matches = 0
+    preserved_total = 0
+    forbidden_hits = 0
+    forbidden_total = 0
     failures: list[dict[str, Any]] = []
 
     for case in cases:
-        result = redact_sensitive_text(case.text)
+        result = redact_sensitive_text(case.input)
         actual_types = frozenset(result.detected_types)
         case_failures: list[str] = []
-        exact_type_matches += int(actual_types == case.expected_types)
-        if actual_types != case.expected_types:
+        types_match = actual_types == case.expected_redacted_types
+        type_matches += int(types_match)
+        if not types_match:
             case_failures.append(
-                f"types: expected={sorted(case.expected_types)}, actual={sorted(actual_types)}"
+                "types: expected="
+                f"{sorted(case.expected_redacted_types)}, actual={sorted(actual_types)}"
             )
-        for fragment in case.sensitive_fragments:
-            positive_fragments += 1
-            leaked = fragment in result.text
-            leaked_fragments += int(leaked)
-            if leaked:
-                case_failures.append(f"sensitive fragment leaked: {fragment}")
-        for placeholder in case.expected_placeholders:
-            expected_placeholders += 1
-            missing = placeholder not in result.text
-            missing_placeholders += int(missing)
-            if missing:
-                case_failures.append(f"missing placeholder: {placeholder}")
-        if not case.expected_types:
-            negative_cases += 1
-            false_positive = bool(actual_types)
-            false_positive_cases += int(false_positive)
-            if false_positive:
-                case_failures.append("false positive redaction")
+        forbidden_total += len(case.forbidden_redacted_types)
+        hits = actual_types & case.forbidden_redacted_types
+        forbidden_hits += len(hits)
+        if hits:
+            case_failures.append(f"forbidden types: {sorted(hits)}")
+        count_match = result.redaction_count == case.expected_redaction_count
+        count_matches += int(count_match)
+        if not count_match:
+            case_failures.append(
+                f"count: expected={case.expected_redaction_count}, "
+                f"actual={result.redaction_count}"
+            )
+        for fragment in case.expected_unmasked_contains:
+            preserved_total += 1
+            preserved = fragment in result.text
+            preserved_matches += int(preserved)
+            if not preserved:
+                case_failures.append(f"required text was masked: {fragment}")
         if case_failures:
             failures.append({"id": case.id, "failures": case_failures})
 
+    total = len(cases)
+    passed = total - len(failures)
     return {
-        "total_cases": len(cases),
-        "type_exact_accuracy": exact_type_matches / len(cases),
-        "masking_success_rate": (
-            (positive_fragments - leaked_fragments) / positive_fragments
-            if positive_fragments
-            else None
+        "total_cases": total,
+        "case_pass_rate": passed / total,
+        "type_exact_accuracy": type_matches / total,
+        "redaction_count_accuracy": count_matches / total,
+        "required_text_preservation_rate": (
+            preserved_matches / preserved_total if preserved_total else None
         ),
-        "sensitive_value_leak_rate": (
-            leaked_fragments / positive_fragments if positive_fragments else None
+        "forbidden_type_incidence": (
+            forbidden_hits / forbidden_total if forbidden_total else None
         ),
-        "placeholder_success_rate": (
-            (expected_placeholders - missing_placeholders) / expected_placeholders
-            if expected_placeholders
-            else None
-        ),
-        "false_positive_case_rate": (
-            false_positive_cases / negative_cases if negative_cases else None
-        ),
-        "positive_fragment_labels": positive_fragments,
-        "negative_cases": negative_cases,
+        "redaction_labels": sum(case.expected_redaction_count for case in cases),
+        "preservation_labels": preserved_total,
         "failed_cases": failures,
     }

@@ -10,6 +10,7 @@ from dataclasses import dataclass
 class RedactionResult:
     text: str
     detected_types: tuple[str, ...]
+    redaction_count: int
 
     @property
     def was_redacted(self) -> bool:
@@ -42,10 +43,20 @@ _PATTERNS: tuple[tuple[str, str, re.Pattern[str]], ...] = (
         re.compile(r"(?<!\d)(?:\d{4}[- ]?){3}\d{4}(?!\d)"),
     ),
     (
-        "auth_secret",
+        "auth_code",
         "[인증정보 마스킹]",
         re.compile(
-            r"(?P<label>인증번호|인증코드|비밀번호|보안코드)"
+            r"(?P<label>인증번호|인증코드|보안코드)"
+            r"(?P<separator>\s*(?:는|은|가|:)?\s*)"
+            r"(?P<value>[A-Za-z0-9!@#$%^&*]{4,20})",
+            re.IGNORECASE,
+        ),
+    ),
+    (
+        "password",
+        "[비밀번호 마스킹]",
+        re.compile(
+            r"(?P<label>비밀번호)"
             r"(?P<separator>\s*(?:는|은|가|:)?\s*)"
             r"(?P<value>[A-Za-z0-9!@#$%^&*]{4,20})",
             re.IGNORECASE,
@@ -75,9 +86,10 @@ def redact_sensitive_text(text: str) -> RedactionResult:
 
     redacted = text
     detected: list[str] = []
+    total_count = 0
 
     for data_type, placeholder, pattern in _PATTERNS:
-        if data_type in {"auth_secret", "account"}:
+        if data_type in {"auth_code", "password", "account"}:
             redacted, count = pattern.subn(
                 lambda match, replacement=placeholder: (
                     f"{match.group('label')}{match.group('separator')}{replacement}"
@@ -88,5 +100,10 @@ def redact_sensitive_text(text: str) -> RedactionResult:
             redacted, count = pattern.subn(placeholder, redacted)
         if count:
             detected.append(data_type)
+            total_count += count
 
-    return RedactionResult(text=redacted, detected_types=tuple(detected))
+    return RedactionResult(
+        text=redacted,
+        detected_types=tuple(detected),
+        redaction_count=total_count,
+    )
