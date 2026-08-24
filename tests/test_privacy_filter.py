@@ -1,9 +1,30 @@
 import unittest
+from pathlib import Path
 
 from src.privacy_filter import redact_sensitive_text
 
+BANK_ACCOUNT_INPUTS = (
+    Path(__file__).parents[1]
+    / "data"
+    / "feedback"
+    / "reviewed"
+    / "bank-account-redaction-inputs.txt"
+)
+
 
 class PrivacyFilterTests(unittest.TestCase):
+    def test_redacts_reviewed_bank_account_formats(self) -> None:
+        inputs = BANK_ACCOUNT_INPUTS.read_text(encoding="utf-8").splitlines()
+
+        self.assertEqual(len(inputs), 63)
+        for case_number, original in enumerate(inputs, start=1):
+            with self.subTest(case=f"BANK-ACCOUNT-{case_number:03d}"):
+                result = redact_sensitive_text(original)
+
+                self.assertEqual(result.detected_types, ("account",))
+                self.assertEqual(result.redaction_count, 1)
+                self.assertIn("[계좌번호 마스킹]", result.text)
+
     def test_redacts_multiple_sensitive_values(self) -> None:
         original = (
             "주민번호 900101-1234567, 전화 010-1234-5678, "

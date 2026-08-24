@@ -81,8 +81,17 @@ _PATTERNS: tuple[tuple[str, str, re.Pattern[str]], ...] = (
             r"(?:(?P<label>계좌번호|계좌)"
             r"(?P<separator>\s*(?:는|은|가|:)?\s*)"
             r"(?P<value>\d(?:[- ]?\d){7,15}))|"
-            r"(?:(?P<bank>[가-힣A-Za-z]+은행)(?P<bank_separator>\s+)"
-            r"(?P<bank_value>\d(?:[- ]?\d){7,15})(?=\s*계좌))"
+            r"(?:(?P<bank>"
+            r"KB국민|국민은행|신한은행|신한|우리은행|하나은행|"
+            r"농협은행|NH농협|농협|기업은행|IBK|카카오뱅크|케이뱅크|K뱅크|"
+            r"토스뱅크|SC제일은행|SC은행|iM뱅크|대구은행|"
+            r"BNK부산은행|부산은행|BNK경남은행|경남은행|광주은행|"
+            r"JB전북은행|전북은행|제주은행|Sh수협은행|수협은행|"
+            r"KDB산업은행|산업은행|우체국예금|우체국|"
+            r"MG새마을금고|새마을금고|신협"
+            r")(?P<bank_separator>\s+)"
+            r"(?P<bank_value>\d(?:[- ]?\d){7,15})(?=\s*(?:계좌|(?:으)?로)))",
+            re.IGNORECASE,
         ),
     ),
 )
@@ -102,7 +111,11 @@ def redact_sensitive_text(text: str) -> RedactionResult:
     detected: list[str] = []
     total_count = 0
 
-    for data_type, placeholder, pattern in _PATTERNS:
+    # Account labels provide stronger context than a bare 13-digit resident-ID
+    # shape. Process them first so compact account numbers such as
+    # ``3011234567891`` are not consumed by the resident-ID rule.
+    ordered_patterns = sorted(_PATTERNS, key=lambda item: item[0] != "account")
+    for data_type, placeholder, pattern in ordered_patterns:
         if data_type == "card":
             redacted, count = pattern.subn(
                 lambda match, replacement=placeholder: (
