@@ -463,6 +463,11 @@ def main() -> None:
             st.success(confirmation_feedback, icon="✅")
         if st.session_state.get("sample_mode"):
             st.caption("샘플 모드: 사전 정의된 기대 분석 결과로 전체 대응 흐름을 시연합니다.")
+        elif st.session_state.get("analysis_mode") == "llm":
+            st.success(
+                "OpenAI API의 구조화 분석 결과입니다.",
+                icon="✨",
+            )
         elif st.session_state.get("analysis_mode") == "local":
             st.info(
                 "현재는 주요 금융사기 표현을 인식하는 로컬 규칙 분석 결과입니다. "

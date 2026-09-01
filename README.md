@@ -47,6 +47,8 @@ Outputs를 사용합니다. `OPENAI_MODEL`로 모델을 재정의할 수 있습�
 확인 경로, 로컬 fallback은 유지됩니다. 로컬 분석은 범위가 제한되므로 화면에 분석 방식을
 알리고 불명확한 상태는 추가 확인으로 보완합니다. `.env`와
 `.streamlit/secrets.toml`은 Git에서 제외됩니다.
+키 등록 형식과 실제 API 호출 확인 방법은
+[OpenAI API 동작 확인 가이드](docs/api-verification.md)를 참고하세요.
 
 ## 검증
 
