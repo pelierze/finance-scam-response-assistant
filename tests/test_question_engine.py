@@ -6,7 +6,13 @@ from src.models import (
     ActionStatus,
     StructuredAnalysis,
 )
-from src.question_engine import QUESTION_CATALOG, apply_answers, select_questions
+from src.question_engine import (
+    QUESTION_CATALOG,
+    apply_answers,
+    select_follow_up_questions,
+    select_questions,
+    select_safety_checks,
+)
 
 
 def analysis_with(**statuses: ActionStatus) -> StructuredAnalysis:
@@ -57,6 +63,41 @@ class QuestionEngineTests(unittest.TestCase):
         self.assertEqual(
             [question.action for question in questions], ["money_transferred"]
         )
+
+    def test_safety_checks_are_separate_from_unmentioned_extraction(self) -> None:
+        result = analysis_with(suspicious_contact_received=ActionStatus.DONE)
+
+        self.assertEqual(select_questions(result), ())
+        self.assertEqual(
+            [question.action for question in select_safety_checks(result)],
+            [
+                "money_transferred",
+                "remote_control_enabled",
+                "auth_secret_shared",
+            ],
+        )
+
+    def test_safety_checks_require_a_suspicious_contact(self) -> None:
+        self.assertEqual(select_safety_checks(analysis_with()), ())
+
+    def test_follow_up_questions_merge_and_deduplicate_sources(self) -> None:
+        result = analysis_with(
+            suspicious_contact_received=ActionStatus.DONE,
+            money_transferred=ActionStatus.UNKNOWN,
+        )
+
+        self.assertEqual(
+            [question.action for question in select_follow_up_questions(result)],
+            [
+                "money_transferred",
+                "remote_control_enabled",
+                "auth_secret_shared",
+            ],
+        )
+
+    def test_follow_up_questions_reject_zero_limit(self) -> None:
+        with self.assertRaisesRegex(ValueError, "at least one"):
+            select_follow_up_questions(analysis_with(), limit=0)
 
     def test_applies_explicit_answer_without_mutating_original(self) -> None:
         original = analysis_with(app_installed=ActionStatus.UNKNOWN)

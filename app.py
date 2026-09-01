@@ -12,7 +12,7 @@ import streamlit as st
 from src.analyzer import OpenAIStructuredExtractor, analyze_text
 from src.local_extractor import LocalKoreanRuleExtractor
 from src.models import ActionStatus, StructuredAnalysis
-from src.question_engine import apply_answers, select_questions
+from src.question_engine import apply_answers, select_follow_up_questions
 from src.response_service import compose_guides, load_guides
 from src.rule_engine import assess_exposure
 from src.sample_service import load_samples
@@ -31,7 +31,6 @@ ANSWER_MAP = {
     "예": ActionStatus.DONE,
     "아니오": ActionStatus.DENIED,
     "잘 모르겠음": ActionStatus.UNKNOWN,
-    "해당 없음": ActionStatus.DENIED,
 }
 DIMENSION_LABELS = {
     "contact": "의심 연락",
@@ -234,6 +233,57 @@ def level_zero_explanation(
     return " ".join(sentences)
 
 
+def analysis_summary(analysis: StructuredAnalysis) -> tuple[str, str, str]:
+    """Return a plain-language headline, explanation, and visual tone."""
+
+    assessment = assess_exposure(analysis)
+    level = int(assessment.representative_level)
+    entity = analysis.impersonated_entity
+    denied_labels = {
+        "link_clicked": "링크 클릭",
+        "app_installed": "앱 설치",
+        "remote_control_enabled": "원격제어 허용",
+        "personal_info_shared": "개인정보 전달",
+        "financial_info_shared": "금융정보 전달",
+        "auth_secret_shared": "인증정보 전달",
+        "money_transferred": "송금·현금 전달",
+    }
+    denied = [
+        label
+        for action, label in denied_labels.items()
+        if analysis.actions[action].status is ActionStatus.DENIED
+    ]
+
+    if level == 0:
+        headline = "현재 확인된 직접 피해 행동은 없습니다"
+        detail = "입력만으로 안전을 확정할 수는 없어 필요한 항목을 추가로 확인합니다."
+        tone = "info"
+    elif level == 1:
+        headline = "의심 연락·요구 단계입니다"
+        subject = f"{entity} 사칭이 의심되는 " if entity else ""
+        detail = f"{subject}연락이 확인됐지만 직접적인 노출 행동은 확인되지 않았습니다."
+        tone = "caution"
+    else:
+        headline = f"{LEVEL_NAMES[level]}가 확인됐습니다"
+        detail = "확인된 행동을 기준으로 피해 확산 방지 절차를 우선 안내합니다."
+        tone = "danger" if level in {3, 5} else "caution"
+
+    if denied:
+        detail += f" 사용자가 하지 않았다고 확인한 항목: {', '.join(denied)}."
+    return headline, detail, tone
+
+
+def render_analysis_summary(analysis: StructuredAnalysis) -> None:
+    headline, detail, tone = analysis_summary(analysis)
+    st.markdown(
+        f'<div class="result-summary {tone}">'
+        '<div class="result-summary-label">현재 판단</div>'
+        f'<div class="result-summary-title">{escape(headline)}</div>'
+        f'<div class="result-summary-copy">{escape(detail)}</div></div>',
+        unsafe_allow_html=True,
+    )
+
+
 def render_compound_summary(assessment) -> None:
     """Explain when several exposure dimensions require a combined response."""
 
@@ -274,12 +324,9 @@ def render_guide_card(guide, *, number: int | None = None) -> None:
         )
 
 
-def render_result(
-    analysis: StructuredAnalysis,
-    *,
-    redacted_types: tuple[str, ...] = (),
-    clarification_answers: dict[str, str] | None = None,
-) -> None:
+def render_result_overview(analysis: StructuredAnalysis) -> None:
+    """Show the initial judgment and urgent actions before follow-up questions."""
+
     assessment = assess_exposure(analysis)
     guides = compose_guides(
         assessment, load_guides(ROOT / "data" / "response_guides.json")
@@ -288,6 +335,8 @@ def render_result(
     later = [guide for guide in guides if guide.priority != "IMMEDIATE"]
 
     st.markdown("---")
+    st.header("분석 결과")
+    render_analysis_summary(analysis)
     render_compound_summary(assessment)
     st.header("🚨 지금 즉시 할 일")
     st.markdown(
@@ -300,6 +349,22 @@ def render_result(
     else:
         st.info(no_immediate_guide_message(has_follow_up_guides=bool(later)))
 
+
+def render_result_details(
+    analysis: StructuredAnalysis,
+    *,
+    redacted_types: tuple[str, ...] = (),
+    clarification_answers: dict[str, str] | None = None,
+) -> None:
+    """Show detailed exposure, evidence, and follow-up guidance."""
+
+    assessment = assess_exposure(analysis)
+    guides = compose_guides(
+        assessment, load_guides(ROOT / "data" / "response_guides.json")
+    )
+    later = [guide for guide in guides if guide.priority != "IMMEDIATE"]
+
+    st.markdown("---")
     st.header("현재 노출 상태")
     st.markdown(
         '<div class="section-note">입력과 확인 답변에서 발견된 상태입니다. '
@@ -350,6 +415,22 @@ def render_result(
                         f"({guide.source_url}) — 확인일 {guide.verified_at.isoformat()}"
                     )
                     seen.add(key)
+
+
+def render_result(
+    analysis: StructuredAnalysis,
+    *,
+    redacted_types: tuple[str, ...] = (),
+    clarification_answers: dict[str, str] | None = None,
+) -> None:
+    """Render the complete result in user-priority order."""
+
+    render_result_overview(analysis)
+    render_result_details(
+        analysis,
+        redacted_types=redacted_types,
+        clarification_answers=clarification_answers,
+    )
 
 
 def main() -> None:
@@ -465,9 +546,10 @@ def main() -> None:
             st.caption("샘플 모드: 사전 정의된 기대 분석 결과로 전체 대응 흐름을 시연합니다.")
         elif st.session_state.get("analysis_mode") == "llm":
             st.success(
-                "OpenAI API의 구조화 분석 결과입니다.",
+                "AI 분석이 완료되었습니다.",
                 icon="✨",
             )
+            st.caption("OpenAI API의 구조화 응답을 검증한 결과입니다.")
         elif st.session_state.get("analysis_mode") == "local":
             st.info(
                 "현재는 주요 금융사기 표현을 인식하는 로컬 규칙 분석 결과입니다. "
@@ -483,6 +565,7 @@ def main() -> None:
         )
         if privacy_notice:
             st.info(privacy_notice, icon="🛡️")
+        render_result_overview(analysis)
         answered_actions = set(
             st.session_state.get("clarification_answered_actions", ())
         )
@@ -491,12 +574,15 @@ def main() -> None:
         else:
             questions = tuple(
                 question
-                for question in select_questions(analysis)
+                for question in select_follow_up_questions(analysis)
                 if question.action not in answered_actions
             )
         if questions:
-            st.subheader("추가 확인")
-            st.caption("답변을 반영하면 아래 위험 상태와 행동 지침을 즉시 다시 계산합니다.")
+            st.subheader("정확도를 높이기 위한 추가 확인")
+            st.caption(
+                "입력에서 불명확했거나 피해 단계 판단에 중요한 항목입니다. "
+                "답변하면 상세 상태와 행동 지침을 즉시 다시 계산합니다."
+            )
             with st.form("clarification_form", border=True):
                 raw_answers = {
                     question.action: st.radio(
@@ -561,7 +647,7 @@ def main() -> None:
                             )
                         st.session_state.confirmation_feedback = feedback
                     st.rerun()
-        render_result(
+        render_result_details(
             analysis,
             redacted_types=tuple(st.session_state.get("redacted_types", ())),
             clarification_answers=dict(
