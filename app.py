@@ -16,6 +16,11 @@ from src.question_engine import apply_answers, select_follow_up_questions
 from src.response_service import compose_guides, load_guides
 from src.rule_engine import assess_exposure
 from src.sample_service import load_samples
+from src.subject_detection import (
+    SELF_SUBJECT,
+    detect_analysis_subjects,
+    subject_question,
+)
 
 ROOT = Path(__file__).parent
 DEFAULT_OPENAI_MODEL = "gpt-5.6-luna"
@@ -130,6 +135,7 @@ def _display_action_state(
     *,
     confirmed_value: str,
     confirmed_tone: str,
+    subject_label: str = SELF_SUBJECT,
 ) -> tuple[str, str]:
     statuses = {analysis.actions[action].status for action in actions}
     if ActionStatus.DONE in statuses:
@@ -137,11 +143,18 @@ def _display_action_state(
     if statuses & {ActionStatus.UNKNOWN, ActionStatus.REQUESTED}:
         return "추가 확인 필요", "caution"
     if ActionStatus.DENIED in statuses:
-        return "사용자가 아니오로 확인", "info"
+        denied_value = (
+            "사용자가 아니오로 확인"
+            if subject_label == SELF_SUBJECT
+            else f"{subject_label} 기준 · 하지 않음"
+        )
+        return denied_value, "info"
     return "언급 없음", "info"
 
 
-def status_summary(analysis: StructuredAnalysis) -> tuple[tuple[str, str, str], ...]:
+def status_summary(
+    analysis: StructuredAnalysis, *, subject_label: str = SELF_SUBJECT
+) -> tuple[tuple[str, str, str], ...]:
     """Preserve confirmed, denied, uncertain, and unmentioned states in the UI."""
 
     dimensions = (
@@ -163,20 +176,23 @@ def status_summary(analysis: StructuredAnalysis) -> tuple[tuple[str, str, str], 
                 actions,
                 confirmed_value=confirmed_value,
                 confirmed_tone=confirmed_tone,
+                subject_label=subject_label,
             ),
         )
         for label, actions, confirmed_value, confirmed_tone in dimensions
     )
 
 
-def render_status_grid(analysis: StructuredAnalysis) -> None:
+def render_status_grid(
+    analysis: StructuredAnalysis, *, subject_label: str = SELF_SUBJECT
+) -> None:
     cards = "".join(
         (
             f'<div class="status-card {tone}">'
             f'<div class="label">{escape(label)}</div>'
             f'<div class="value">{escape(value)}</div></div>'
         )
-        for label, value, tone in status_summary(analysis)
+        for label, value, tone in status_summary(analysis, subject_label=subject_label)
     )
     st.markdown(f'<div class="status-grid">{cards}</div>', unsafe_allow_html=True)
 
@@ -233,7 +249,9 @@ def level_zero_explanation(
     return " ".join(sentences)
 
 
-def analysis_summary(analysis: StructuredAnalysis) -> tuple[str, str, str]:
+def analysis_summary(
+    analysis: StructuredAnalysis, *, subject_label: str = SELF_SUBJECT
+) -> tuple[str, str, str]:
     """Return a plain-language headline, explanation, and visual tone."""
 
     assessment = assess_exposure(analysis)
@@ -253,31 +271,34 @@ def analysis_summary(analysis: StructuredAnalysis) -> tuple[str, str, str]:
         for action, label in denied_labels.items()
         if analysis.actions[action].status is ActionStatus.DENIED
     ]
+    scope = f"{subject_label} 기준으로 "
 
     if level == 0:
         headline = "현재 확인된 직접 피해 행동은 없습니다"
-        detail = "입력만으로 안전을 확정할 수는 없어 필요한 항목을 추가로 확인합니다."
+        detail = f"{scope}입력만으로 안전을 확정할 수는 없어 필요한 항목을 추가로 확인합니다."
         tone = "info"
     elif level == 1:
         headline = "의심 연락·요구 단계입니다"
         subject = f"{entity} 사칭이 의심되는 " if entity else ""
-        detail = f"{subject}연락이 확인됐지만 직접적인 노출 행동은 확인되지 않았습니다."
+        detail = f"{scope}{subject}연락이 확인됐지만 직접적인 노출 행동은 확인되지 않았습니다."
         tone = "caution"
     else:
         headline = f"{LEVEL_NAMES[level]}가 확인됐습니다"
-        detail = "확인된 행동을 기준으로 피해 확산 방지 절차를 우선 안내합니다."
+        detail = f"{scope}확인된 행동을 바탕으로 피해 확산 방지 절차를 우선 안내합니다."
         tone = "danger" if level in {3, 5} else "caution"
 
     if denied:
-        detail += f" 사용자가 하지 않았다고 확인한 항목: {', '.join(denied)}."
+        detail += f" 하지 않았다고 확인한 항목: {', '.join(denied)}."
     return headline, detail, tone
 
 
-def render_analysis_summary(analysis: StructuredAnalysis) -> None:
-    headline, detail, tone = analysis_summary(analysis)
+def render_analysis_summary(
+    analysis: StructuredAnalysis, *, subject_label: str = SELF_SUBJECT
+) -> None:
+    headline, detail, tone = analysis_summary(analysis, subject_label=subject_label)
     st.markdown(
         f'<div class="result-summary {tone}">'
-        '<div class="result-summary-label">현재 판단</div>'
+        f'<div class="result-summary-label">현재 판단 · {escape(subject_label)} 기준</div>'
         f'<div class="result-summary-title">{escape(headline)}</div>'
         f'<div class="result-summary-copy">{escape(detail)}</div></div>',
         unsafe_allow_html=True,
@@ -324,7 +345,9 @@ def render_guide_card(guide, *, number: int | None = None) -> None:
         )
 
 
-def render_result_overview(analysis: StructuredAnalysis) -> None:
+def render_result_overview(
+    analysis: StructuredAnalysis, *, subject_label: str = SELF_SUBJECT
+) -> None:
     """Show the initial judgment and urgent actions before follow-up questions."""
 
     assessment = assess_exposure(analysis)
@@ -336,7 +359,7 @@ def render_result_overview(analysis: StructuredAnalysis) -> None:
 
     st.markdown("---")
     st.header("분석 결과")
-    render_analysis_summary(analysis)
+    render_analysis_summary(analysis, subject_label=subject_label)
     render_compound_summary(assessment)
     st.header("🚨 지금 즉시 할 일")
     st.markdown(
@@ -353,6 +376,7 @@ def render_result_overview(analysis: StructuredAnalysis) -> None:
 def render_result_details(
     analysis: StructuredAnalysis,
     *,
+    subject_label: str = SELF_SUBJECT,
     redacted_types: tuple[str, ...] = (),
     clarification_answers: dict[str, str] | None = None,
 ) -> None:
@@ -367,11 +391,11 @@ def render_result_details(
     st.markdown("---")
     st.header("현재 노출 상태")
     st.markdown(
-        '<div class="section-note">입력과 확인 답변에서 발견된 상태입니다. '
+        f'<div class="section-note">{escape(subject_label)} 기준으로 입력과 확인 답변에서 발견된 상태입니다. '
         '“확인 안 됨”은 안전하다는 뜻이 아닙니다.</div>',
         unsafe_allow_html=True,
     )
-    render_status_grid(analysis)
+    render_status_grid(analysis, subject_label=subject_label)
 
     answer_rows = clarification_answer_summary(clarification_answers or {})
     if answer_rows:
@@ -420,14 +444,16 @@ def render_result_details(
 def render_result(
     analysis: StructuredAnalysis,
     *,
+    subject_label: str = SELF_SUBJECT,
     redacted_types: tuple[str, ...] = (),
     clarification_answers: dict[str, str] | None = None,
 ) -> None:
     """Render the complete result in user-priority order."""
 
-    render_result_overview(analysis)
+    render_result_overview(analysis, subject_label=subject_label)
     render_result_details(
         analysis,
+        subject_label=subject_label,
         redacted_types=redacted_types,
         clarification_answers=clarification_answers,
     )
@@ -507,6 +533,21 @@ def main() -> None:
             max_chars=3000,
             placeholder="예: 검찰이라고 전화가 와서 앱 설치와 송금을 요구했습니다.",
         )
+        subject_options = detect_analysis_subjects(situation)
+        analysis_subject = SELF_SUBJECT
+        if len(subject_options) > 1:
+            st.info(
+                "가족·지인의 피해 행동이 감지되었습니다. "
+                "누구의 피해를 기준으로 안내할지 선택해주세요.",
+                icon="👥",
+            )
+            analysis_subject = st.radio(
+                "분석 대상",
+                subject_options,
+                index=1,
+                horizontal=True,
+                key=f"subject_{'_'.join(subject_options)}",
+            )
         analyze_clicked = st.button(
             "상황 분석하기", type="primary", use_container_width=True
         )
@@ -517,27 +558,42 @@ def main() -> None:
             st.session_state.analysis = selected.analysis
             st.session_state.sample_mode = True
             st.session_state.redacted_types = ()
+            st.session_state.analysis_subject = SELF_SUBJECT
         else:
             api_key, model = openai_runtime_settings()
             if api_key:
                 result = analyze_text(
                     situation,
-                    OpenAIStructuredExtractor(api_key=api_key, model=model),
+                    OpenAIStructuredExtractor(
+                        api_key=api_key,
+                        model=model,
+                        analysis_subject=analysis_subject,
+                    ),
                 )
                 if result.used_fallback:
-                    result = analyze_text(situation, LocalKoreanRuleExtractor())
+                    result = analyze_text(
+                        situation,
+                        LocalKoreanRuleExtractor(analysis_subject=analysis_subject),
+                    )
                     st.session_state.analysis_mode = "local_fallback"
                 else:
                     st.session_state.analysis_mode = "llm"
             else:
-                result = analyze_text(situation, LocalKoreanRuleExtractor())
+                result = analyze_text(
+                    situation,
+                    LocalKoreanRuleExtractor(analysis_subject=analysis_subject),
+                )
                 st.session_state.analysis_mode = "local"
             st.session_state.analysis = result.analysis
             st.session_state.redacted_types = result.redacted_types
             st.session_state.sample_mode = False
+            st.session_state.analysis_subject = analysis_subject
 
     analysis = st.session_state.get("analysis")
     if analysis:
+        active_subject = st.session_state.get("analysis_subject", SELF_SUBJECT)
+        if active_subject != SELF_SUBJECT:
+            st.info(f"현재 결과는 **{active_subject} 기준**으로 계산했습니다.", icon="👤")
         confirmation_feedback = st.session_state.pop("confirmation_feedback", None)
         if confirmation_feedback:
             st.toast("추가 답변이 정상적으로 반영되었습니다.", icon="✅")
@@ -565,7 +621,7 @@ def main() -> None:
         )
         if privacy_notice:
             st.info(privacy_notice, icon="🛡️")
-        render_result_overview(analysis)
+        render_result_overview(analysis, subject_label=active_subject)
         answered_actions = set(
             st.session_state.get("clarification_answered_actions", ())
         )
@@ -586,7 +642,7 @@ def main() -> None:
             with st.form("clarification_form", border=True):
                 raw_answers = {
                     question.action: st.radio(
-                        question.prompt,
+                        subject_question(question.prompt, active_subject),
                         ANSWER_MAP.keys(),
                         index=None,
                         horizontal=True,
@@ -649,6 +705,7 @@ def main() -> None:
                     st.rerun()
         render_result_details(
             analysis,
+            subject_label=active_subject,
             redacted_types=tuple(st.session_state.get("redacted_types", ())),
             clarification_answers=dict(
                 st.session_state.get("clarification_answers", {})

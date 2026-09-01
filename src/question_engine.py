@@ -77,8 +77,15 @@ def select_safety_checks(
     if limit < 1:
         raise ValueError("Question limit must be at least one")
 
-    contact_status = analysis.actions["suspicious_contact_received"].status
-    if contact_status not in {ActionStatus.DONE, ActionStatus.REQUESTED}:
+    incident_statuses = {
+        observation.status for observation in analysis.actions.values()
+    }
+    if not incident_statuses.intersection(
+        {
+            ActionStatus.DONE,
+            ActionStatus.REQUESTED,
+        }
+    ):
         return ()
 
     questions = tuple(
