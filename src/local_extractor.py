@@ -6,6 +6,7 @@ import re
 from dataclasses import dataclass
 
 from src.models import TRACKED_ACTIONS, ActionStatus
+from src.subject_detection import SELF_SUBJECT, focus_text_on_subject, validate_subject
 
 
 @dataclass(frozen=True)
@@ -77,11 +78,13 @@ _EXPLICIT_DENIED = {
         r"(?:앱|프로그램).{0,35}(?:깐|설치한)\s*적은\s*없|"
         r"(?:앱이나\s*링크|앱은).{0,20}건드리지\s*않|"
         r"실제로는\s*설치하지\s*않|"
-        r"제\s*휴대폰에는\s*아무것도\s*설치하지\s*않"
+        r"제\s*휴대폰에는\s*아무것도\s*설치하지\s*않|"
+        r"아무것도.{0,12}설치하거나.{0,20}전달하지\s*않"
     ),
     "personal_info_shared": _compile(
         r"정보도\s*입력하지\s*않|개인정보를\s*알려준\s*적은\s*없|"
-        r"신분증\s*사진.{0,45}실제로\s*전송하지는\s*않"
+        r"신분증\s*사진.{0,45}실제로\s*전송하지는\s*않|"
+        r"아무것도.{0,12}설치하거나.{0,20}전달하지\s*않"
     ),
     "financial_info_shared": _compile(r"계좌번호\s*자체는\s*알려주지\s*않"),
     "money_transferred": _compile(
@@ -189,7 +192,7 @@ ACTION_PATTERNS = {
             r"개인정보|주민등록정보|주민(?:등록)?번호|신분증|주소|생년월일|주민등록번호 마스킹"
         ),
         _compile(
-            r"(?:개인정보|주민등록정보|주민(?:등록)?번호|신분증|주소|생년월일|주민등록번호 마스킹).{0,25}(?:알려줬|알려준|말했|보냈|전달했|입력했|찍어줬|제공했|제공한)"
+            r"(?:개인정보|주민등록정보|주민(?:등록)?번호|신분증|주소|생년월일|주민등록번호 마스킹).{0,25}(?:알려줬|알려준|알려주고|말했|보냈|전달했|입력했|찍어줬|제공했|제공한)"
         ),
         _compile(
             r"(?:개인정보|주민(?:등록)?번호|신분증|주소|생년월일).{0,30}(?:안\s*(?:알려|말|보내|넘기)|알려주지|말하지|보내지|전달하지|입력하지|넘기지)\s*않"
@@ -414,8 +417,12 @@ def _observation(
 class LocalKoreanRuleExtractor:
     """Extract common high-risk actions without an external model call."""
 
+    def __init__(self, *, analysis_subject: str = SELF_SUBJECT) -> None:
+        self._analysis_subject = validate_subject(analysis_subject)
+
     def extract(self, text: str) -> dict[str, object]:
         text = _strip_injection_instruction(_current_incident_text(text))
+        text = focus_text_on_subject(text, self._analysis_subject)
         actions = {
             action: _observation(
                 text,

@@ -143,6 +143,19 @@ def test_analysis_summary_explains_denied_installation_at_contact_level() -> Non
     assert tone == "caution"
 
 
+def test_analysis_summary_and_status_name_family_subject() -> None:
+    result = analysis(
+        app_installed=ActionStatus.DONE,
+        personal_info_shared=ActionStatus.DONE,
+    )
+
+    headline, detail, tone = analysis_summary(result, subject_label="어머니")
+
+    assert headline == "정보·인증수단 노출 단계가 확인됐습니다"
+    assert detail.startswith("어머니 기준으로")
+    assert tone == "caution"
+
+
 def test_analysis_summary_prioritizes_financial_loss() -> None:
     headline, detail, tone = analysis_summary(
         analysis(money_transferred=ActionStatus.DONE)

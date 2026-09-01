@@ -64,6 +64,19 @@ class AnalyzerTests(unittest.TestCase):
         self.assertEqual(call["reasoning"], {"effort": "none"})
         self.assertFalse(call["store"])
 
+    def test_openai_extractor_scopes_instructions_to_selected_subject(self) -> None:
+        parsed = LLMAnalysisSchema.model_validate(valid_payload())
+        client = FakeOpenAIClient(output=parsed)
+        extractor = OpenAIStructuredExtractor(
+            api_key="test-key", client=client, analysis_subject="어머니"
+        )
+
+        extractor.extract("어머니가 앱을 설치했습니다")
+
+        instructions = client.responses.calls[0]["instructions"]
+        self.assertIn("분석 대상자는 “어머니”", instructions)
+        self.assertIn("분석 대상자가 아닌 다른 사람", instructions)
+
     def test_openai_error_becomes_safe_provider_failure(self) -> None:
         client = FakeOpenAIClient(error=OpenAIError("network failure"))
         extractor = OpenAIStructuredExtractor(api_key="test-key", client=client)
