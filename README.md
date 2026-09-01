@@ -36,15 +36,17 @@ pip install -r requirements.txt -r requirements-dev.txt
 streamlit run app.py
 ```
 
-`OPENAI_API_KEY`가 있으면 LLM 구조화 추출을 사용합니다. 키가 없거나 API 호출이
-실패하면 주요 금융사기 표현을 지원하는 로컬 규칙 분석으로 자유 입력을 처리합니다.
+`OPENAI_API_KEY`가 있으면 OpenAI Responses API와 `gpt-5.6-luna`의 Structured
+Outputs를 사용합니다. `OPENAI_MODEL`로 모델을 재정의할 수 있습니다. 키가 없거나 API
+호출이 실패하면 주요 금융사기 표현을 지원하는 로컬 규칙 분석으로 자유 입력을 처리합니다.
 
-현재 제출용 배포 환경은 `OPENAI_API_KEY`를 사용하지 않으며 로컬 규칙 분석기로
-동작합니다. 실제 LLM 50건 평가는 아직 실행하지 않았으므로 제출 성능 수치에 포함하지
-않고, 완료된 로컬 회귀 결과와 합성 마스킹 평가만 구분해 제시합니다. API 키가 없거나
-향후 LLM 연결이 실패해도 고정 긴급안내와 공식 확인 경로, 로컬 fallback은 유지됩니다.
-로컬 분석은 범위가 제한되므로 화면에 분석 방식을 알리고 불명확한 상태는 추가 확인으로
-보완합니다. `.env`와 `.streamlit/secrets.toml`은 Git에서 제외됩니다.
+현재 배포 환경에는 `OPENAI_API_KEY`를 Streamlit secret으로 주입합니다. 사용자 입력은
+외부 전송 전에 로컬에서 마스킹하고 API 응답 저장은 비활성화합니다. 실제 LLM 50건 평가는
+아직 실행하지 않았으므로 제출 성능 수치에 포함하지 않고, 완료된 로컬 회귀 결과와 합성
+마스킹 평가만 구분해 제시합니다. API 키가 없거나 연결이 실패해도 고정 긴급안내와 공식
+확인 경로, 로컬 fallback은 유지됩니다. 로컬 분석은 범위가 제한되므로 화면에 분석 방식을
+알리고 불명확한 상태는 추가 확인으로 보완합니다. `.env`와
+`.streamlit/secrets.toml`은 Git에서 제외됩니다.
 
 ## 검증
 
@@ -57,5 +59,5 @@ ruff check app.py src tests
 [릴리스 체크리스트](docs/release-checklist.md)를 참고하세요.
 자연어 평가 구성과 기준 성능은 [평가 데이터셋 문서](docs/evaluation.md)에 기록합니다.
 
-현재 자동 테스트는 81개이며 전체 `src` 커버리지는 89%, 로컬 자연어 추출기
+현재 자동 테스트는 86개이며 전체 `src` 커버리지는 90%, 로컬 자연어 추출기
 커버리지는 100%다. 실제 LLM 자연어 성능은 별도의 평가 데이터로 검증해야 한다.

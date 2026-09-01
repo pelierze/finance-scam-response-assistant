@@ -24,7 +24,7 @@ def test_evaluation_metadata_is_reproducible_except_for_timestamp() -> None:
 
     assert metadata["started_at"] == "2026-08-24T12:00:00+00:00"
     assert metadata["provider"] == "openai"
-    assert metadata["api_path"] == "chat.completions.parse"
+    assert metadata["api_path"] == "responses.parse"
     assert metadata["model"] == "test-model"
     assert metadata["temperature"] == 0
     assert metadata["case_count"] == 1

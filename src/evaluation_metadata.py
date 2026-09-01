@@ -52,13 +52,15 @@ def build_evaluation_metadata(
         "started_at": timestamp.astimezone(UTC).isoformat(),
         "extractor": extractor,
         "provider": "openai" if extractor == "openai" else "local",
-        "api_path": "chat.completions.parse" if extractor == "openai" else None,
+        "api_path": "responses.parse" if extractor == "openai" else None,
         "model": model,
         "temperature": temperature,
         "max_attempts": max_attempts,
         "schema_version": SCHEMA_VERSION,
         "system_prompt_sha256": _sha256(SYSTEM_PROMPT),
-        "schema_sha256": _sha256(_canonical_json(LLMAnalysisSchema.model_json_schema())),
+        "schema_sha256": _sha256(
+            _canonical_json(LLMAnalysisSchema.model_json_schema())
+        ),
         "case_set_sha256": _sha256(_canonical_json(cases)),
         "case_count": len(cases),
         "guide_labels_sha256": _sha256(_canonical_json(guide_labels)),

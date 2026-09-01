@@ -1,6 +1,9 @@
 import unittest
+from types import SimpleNamespace
 
-from src.analyzer import analyze_text
+from openai import OpenAIError
+
+from src.analyzer import LLMAnalysisSchema, OpenAIStructuredExtractor, analyze_text
 from src.models import TRACKED_ACTIONS, ActionStatus
 
 
@@ -28,7 +31,52 @@ class FakeExtractor:
         return output
 
 
+class FakeResponses:
+    def __init__(self, output=None, error=None):
+        self.output = output
+        self.error = error
+        self.calls = []
+
+    def parse(self, **kwargs):
+        self.calls.append(kwargs)
+        if self.error:
+            raise self.error
+        return SimpleNamespace(output_parsed=self.output)
+
+
+class FakeOpenAIClient:
+    def __init__(self, output=None, error=None):
+        self.responses = FakeResponses(output, error)
+
+
 class AnalyzerTests(unittest.TestCase):
+    def test_openai_extractor_uses_responses_structured_outputs(self) -> None:
+        parsed = LLMAnalysisSchema.model_validate(valid_payload())
+        client = FakeOpenAIClient(output=parsed)
+        extractor = OpenAIStructuredExtractor(api_key="test-key", client=client)
+
+        payload = extractor.extract("검찰이라고 전화가 왔습니다")
+
+        self.assertEqual(payload, parsed.model_dump())
+        call = client.responses.calls[0]
+        self.assertEqual(call["model"], "gpt-5.6-luna")
+        self.assertEqual(call["text_format"], LLMAnalysisSchema)
+        self.assertEqual(call["reasoning"], {"effort": "none"})
+        self.assertFalse(call["store"])
+
+    def test_openai_error_becomes_safe_provider_failure(self) -> None:
+        client = FakeOpenAIClient(error=OpenAIError("network failure"))
+        extractor = OpenAIStructuredExtractor(api_key="test-key", client=client)
+
+        result = analyze_text("돈을 보냈습니다", extractor, max_attempts=1)
+
+        self.assertTrue(result.used_fallback)
+        self.assertEqual(result.error_code, "provider_unavailable")
+
+    def test_openai_extractor_rejects_invalid_timeout(self) -> None:
+        with self.assertRaisesRegex(ValueError, "greater than zero"):
+            OpenAIStructuredExtractor(api_key="test-key", timeout_seconds=0)
+
     def test_redacts_before_extractor_and_returns_valid_analysis(self) -> None:
         payload = valid_payload()
         payload["actions"]["auth_secret_shared"] = {
@@ -58,7 +106,9 @@ class AnalyzerTests(unittest.TestCase):
         result = analyze_text("돈을 보냈습니다", extractor)
         self.assertTrue(result.used_fallback)
         self.assertEqual(result.error_code, "provider_unavailable")
-        self.assertFalse(result.analysis.actions["money_transferred"].status is ActionStatus.DONE)
+        self.assertFalse(
+            result.analysis.actions["money_transferred"].status is ActionStatus.DONE
+        )
 
     def test_invalid_input_does_not_call_provider(self) -> None:
         extractor = FakeExtractor([])
