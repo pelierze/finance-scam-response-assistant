@@ -14,6 +14,14 @@
 
 전체 범위는 [MVP 구현 기획서](docs/planning/mvp-plan.md)를 참고하세요.
 
+## 제출용 문서 원고
+
+- [공모전 기획서](docs/submission/proposal.md)
+- [MVP 기능명세서](docs/submission/functional-specification.md)
+
+두 원고는 PDF 변환 전에 대회 제공 양식으로 옮기고, 표시된 위치에 실제 화면 캡처와
+팀 정보를 추가해야 합니다.
+
 ## 공개 MVP
 
 - Streamlit Community Cloud: https://finance-scam-response-assistant-6mgmff5zupef2elhdfsgy9.streamlit.app/
