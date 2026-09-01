@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Protocol
 
+from openai import OpenAI, OpenAIError
 from pydantic import BaseModel, ConfigDict
 
 from src.models import TRACKED_ACTIONS, StructuredAnalysis
@@ -80,28 +81,39 @@ class OpenAIStructuredExtractor:
         api_key: str,
         model: str = "gpt-5.6-luna",
         temperature: float = 0.0,
+        timeout_seconds: float = 20.0,
+        client: Any | None = None,
     ) -> None:
         if not api_key:
             raise ValueError("OpenAI API key is required")
         if not 0 <= temperature <= 2:
             raise ValueError("Temperature must be between zero and two")
-        from openai import OpenAI
+        if timeout_seconds <= 0:
+            raise ValueError("Timeout must be greater than zero")
 
-        self._client = OpenAI(api_key=api_key)
+        self._client = client or OpenAI(
+            api_key=api_key,
+            timeout=timeout_seconds,
+            max_retries=0,
+        )
         self._model = model
         self._temperature = temperature
 
     def extract(self, text: str) -> dict[str, Any]:
-        completion = self._client.chat.completions.parse(
-            model=self._model,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": text},
-            ],
-            response_format=LLMAnalysisSchema,
-            temperature=self._temperature,
-        )
-        parsed = completion.choices[0].message.parsed
+        try:
+            response = self._client.responses.parse(
+                model=self._model,
+                instructions=SYSTEM_PROMPT,
+                input=text,
+                text_format=LLMAnalysisSchema,
+                reasoning={"effort": "none"},
+                temperature=self._temperature,
+                store=False,
+            )
+        except OpenAIError as exc:
+            raise RuntimeError("OpenAI provider request failed") from exc
+
+        parsed = response.output_parsed
         if parsed is None:
             raise ValueError("Model returned no parsed analysis")
         return parsed.model_dump()

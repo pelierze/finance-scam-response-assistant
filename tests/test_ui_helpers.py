@@ -3,6 +3,7 @@ from app import (
     completed_clarification_actions,
     level_zero_explanation,
     no_immediate_guide_message,
+    openai_runtime_settings,
     privacy_notice_text,
     status_summary,
 )
@@ -27,6 +28,22 @@ def analysis(**statuses: ActionStatus) -> StructuredAnalysis:
     return StructuredAnalysis(None, (), actions)
 
 
+def test_openai_runtime_settings_supports_streamlit_environment_secrets() -> None:
+    api_key, model = openai_runtime_settings({"OPENAI_API_KEY": " secret "})
+
+    assert api_key == "secret"
+    assert model == "gpt-5.6-luna"
+
+
+def test_openai_runtime_settings_allows_model_override() -> None:
+    api_key, model = openai_runtime_settings(
+        {"OPENAI_API_KEY": "secret", "OPENAI_MODEL": " gpt-5.6-terra "}
+    )
+
+    assert api_key == "secret"
+    assert model == "gpt-5.6-terra"
+
+
 def test_status_summary_uses_fixed_semantic_colors() -> None:
     summary = status_summary(
         analysis(
@@ -43,9 +60,7 @@ def test_status_summary_uses_fixed_semantic_colors() -> None:
 
 
 def test_financial_loss_is_always_immediate_red() -> None:
-    summary = status_summary(
-        analysis(money_transferred=ActionStatus.DONE)
-    )
+    summary = status_summary(analysis(money_transferred=ActionStatus.DONE))
     assert summary[-1] == ("금전 피해", "발생", "danger")
 
 

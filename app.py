@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Mapping
 from html import escape
 from pathlib import Path
 
@@ -17,6 +18,7 @@ from src.rule_engine import assess_exposure
 from src.sample_service import load_samples
 
 ROOT = Path(__file__).parent
+DEFAULT_OPENAI_MODEL = "gpt-5.6-luna"
 LEVEL_NAMES = {
     0: "정보 부족 또는 일반 상담",
     1: "의심 연락·요구 단계",
@@ -63,6 +65,17 @@ ANSWER_LABELS = {
     ActionStatus.DENIED: "아니오",
     ActionStatus.UNKNOWN: "잘 모르겠음",
 }
+
+
+def openai_runtime_settings(
+    environ: Mapping[str, str] = os.environ,
+) -> tuple[str, str]:
+    """Read provider settings without exposing secret values to the UI."""
+
+    api_key = environ.get("OPENAI_API_KEY", "").strip()
+    model = environ.get("OPENAI_MODEL", DEFAULT_OPENAI_MODEL).strip()
+    return api_key, model or DEFAULT_OPENAI_MODEL
+
 
 def load_styles() -> str:
     """Load the app stylesheet from the static asset file."""
@@ -424,9 +437,12 @@ def main() -> None:
             st.session_state.sample_mode = True
             st.session_state.redacted_types = ()
         else:
-            api_key = os.getenv("OPENAI_API_KEY", "")
+            api_key, model = openai_runtime_settings()
             if api_key:
-                result = analyze_text(situation, OpenAIStructuredExtractor(api_key=api_key))
+                result = analyze_text(
+                    situation,
+                    OpenAIStructuredExtractor(api_key=api_key, model=model),
+                )
                 if result.used_fallback:
                     result = analyze_text(situation, LocalKoreanRuleExtractor())
                     st.session_state.analysis_mode = "local_fallback"
