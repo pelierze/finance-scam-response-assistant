@@ -40,6 +40,12 @@ QUESTION_CATALOG = {
     ),
 }
 
+SAFETY_SCREENING_ACTIONS = (
+    "money_transferred",
+    "remote_control_enabled",
+    "auth_secret_shared",
+)
+
 
 def select_questions(
     analysis: StructuredAnalysis, *, limit: int = 3
@@ -60,6 +66,45 @@ def select_questions(
         (QUESTION_CATALOG[action] for action in candidates),
         key=lambda question: question.priority,
     )
+    return tuple(ordered[:limit])
+
+
+def select_safety_checks(
+    analysis: StructuredAnalysis, *, limit: int = 3
+) -> tuple[ClarificationQuestion, ...]:
+    """Screen high-impact actions that were omitted after a suspicious contact."""
+
+    if limit < 1:
+        raise ValueError("Question limit must be at least one")
+
+    contact_status = analysis.actions["suspicious_contact_received"].status
+    if contact_status not in {ActionStatus.DONE, ActionStatus.REQUESTED}:
+        return ()
+
+    questions = tuple(
+        QUESTION_CATALOG[action]
+        for action in SAFETY_SCREENING_ACTIONS
+        if analysis.actions[action].status is ActionStatus.NOT_MENTIONED
+    )
+    return questions[:limit]
+
+
+def select_follow_up_questions(
+    analysis: StructuredAnalysis, *, limit: int = 3
+) -> tuple[ClarificationQuestion, ...]:
+    """Combine extraction clarifications and independent safety screening."""
+
+    if limit < 1:
+        raise ValueError("Question limit must be at least one")
+
+    candidates = {
+        question.action: question
+        for question in (
+            *select_questions(analysis, limit=len(QUESTION_CATALOG)),
+            *select_safety_checks(analysis, limit=len(SAFETY_SCREENING_ACTIONS)),
+        )
+    }
+    ordered = sorted(candidates.values(), key=lambda question: question.priority)
     return tuple(ordered[:limit])
 
 

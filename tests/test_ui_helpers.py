@@ -1,4 +1,5 @@
 from app import (
+    analysis_summary,
     clarification_answer_summary,
     completed_clarification_actions,
     level_zero_explanation,
@@ -125,3 +126,36 @@ def test_level_zero_explains_redaction_without_assuming_sharing() -> None:
     assert "피해 행동은 확인되지 않았습니다" in message
     assert "주민등록번호는 자동 마스킹" in message
     assert "상대방에게 전달된 것으로 판단하지 않습니다" in message
+
+
+def test_analysis_summary_explains_denied_installation_at_contact_level() -> None:
+    result = analysis(
+        suspicious_contact_received=ActionStatus.DONE,
+        app_installed=ActionStatus.DENIED,
+    )
+    result = StructuredAnalysis("검찰", (), result.actions)
+
+    headline, detail, tone = analysis_summary(result)
+
+    assert headline == "의심 연락·요구 단계입니다"
+    assert "검찰 사칭이 의심되는 연락" in detail
+    assert "앱 설치" in detail
+    assert tone == "caution"
+
+
+def test_analysis_summary_prioritizes_financial_loss() -> None:
+    headline, detail, tone = analysis_summary(
+        analysis(money_transferred=ActionStatus.DONE)
+    )
+
+    assert headline == "금전 피해 단계가 확인됐습니다"
+    assert "피해 확산 방지" in detail
+    assert tone == "danger"
+
+
+def test_analysis_summary_does_not_claim_level_zero_is_safe() -> None:
+    headline, detail, tone = analysis_summary(analysis())
+
+    assert "직접 피해 행동은 없습니다" in headline
+    assert "안전을 확정" in detail
+    assert tone == "info"
